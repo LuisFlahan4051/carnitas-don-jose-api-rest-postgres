@@ -1,4 +1,4 @@
-package routes
+package crud
 
 import (
 	"database/sql"
@@ -104,6 +104,10 @@ func getBranches(root bool) ([]models.Branch, error) {
 		branches = append(branches, branch)
 	}
 
+	if len(branches) == 0 {
+		return branches, sql.ErrNoRows
+	}
+
 	return branches, err
 
 }
@@ -153,10 +157,16 @@ func deleteBranch(id uint, root bool) error {
 	return nil
 }
 
-func updateBranch(branch *models.Branch, root bool) error {
+func updateBranch(newBranch *models.Branch, root bool) error {
 	db := database.Connect()
 	defer db.Close()
 
+	updatingBranch, err := getBranch(newBranch.Id, root)
+	if err != nil {
+		return errors.New("branch doesn't exist")
+	}
+
+	updatingBranch.CompareBranch(*newBranch)
 	var updateQuery string
 
 	if root {
@@ -174,26 +184,26 @@ func updateBranch(branch *models.Branch, root bool) error {
 			" address"
 		err := db.QueryRow(
 			updateQuery,
-			branch.CreatedAt,
+			updatingBranch.CreatedAt,
 			time.Now(),
-			&branch.DeletedAt,
-			branch.Name,
-			branch.Address,
-			branch.Id,
+			updatingBranch.DeletedAt,
+			updatingBranch.Name,
+			updatingBranch.Address,
+			updatingBranch.Id,
 		).Scan(
-			&branch.Id,
-			&branch.CreatedAt,
-			&branch.UpdatedAt,
-			&branch.DeletedAt,
-			&branch.Name,
-			&branch.Address,
+			&newBranch.Id,
+			&newBranch.CreatedAt,
+			&newBranch.UpdatedAt,
+			&newBranch.DeletedAt,
+			&newBranch.Name,
+			&newBranch.Address,
 		)
 
 		return err
 	}
 
-	if branchIsDeleted(branch.Id) {
-		return errors.New("branch doesn't exist")
+	if branchIsDeleted(newBranch.Id) {
+		return errors.New("branch is deleted")
 	}
 
 	updateQuery = "UPDATE branches SET" +
@@ -206,19 +216,19 @@ func updateBranch(branch *models.Branch, root bool) error {
 		" deleted_at," +
 		" name," +
 		" address"
-	err := db.QueryRow(
+	err = db.QueryRow(
 		updateQuery,
 		time.Now(),
-		branch.Name,
-		branch.Address,
-		branch.Id,
+		updatingBranch.Name,
+		updatingBranch.Address,
+		updatingBranch.Id,
 	).Scan(
-		&branch.Id,
-		&branch.CreatedAt,
-		&branch.UpdatedAt,
-		&branch.DeletedAt,
-		&branch.Name,
-		&branch.Address,
+		&newBranch.Id,
+		&newBranch.CreatedAt,
+		&newBranch.UpdatedAt,
+		&newBranch.DeletedAt,
+		&newBranch.Name,
+		&newBranch.Address,
 	)
 
 	return err

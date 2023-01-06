@@ -266,6 +266,7 @@ type Users struct {
 	Admin     bool `json:"admin"`
 	Root      bool `json:"root"`
 	Verified  bool `json:"verified"`
+	Warning   bool `json:"warning"`
 	Darktheme bool `json:"darktheme"`
 
 	Active_contract bool `json:"active_contract"`
@@ -369,13 +370,18 @@ type Turns struct {
 	End_date   time.Time `json:"end_date"`
 	Active     bool      `json:"active"`
 
+	Income_counter     float64 `json:"income_counter"`
+	Netincomes_counter float64 `json:"netincomes_counter"`
+	Expenses_counter   float64 `json:"expenses_counter"`
+
 	User_id   uint `json:"user_id"`
 	Branch_id uint `json:"branch_id"`
 
-	Turn_user_roles []Turn_user_roles `json:"turn_user_roles"`
-	Sales           []Sales           `json:"sales"`
-	Inventories     []Inventories     `json:"inventories"`
-	Turn_safebox    `json:"turn_safebox"`
+	Turn_user_roles  []Turn_user_roles `json:"turn_user_roles"`
+	Sales            []Sales           `json:"sales"`
+	Inventories      []Inventories     `json:"inventories"`
+	Safebox_received Turn_safebox      `json:"safebox_received"`
+	Safebox_finished Turn_safebox      `json:"safebox_finished"`
 }
 
 type Turn_user_roles struct {

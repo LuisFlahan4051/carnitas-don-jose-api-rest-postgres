@@ -11,10 +11,16 @@ type Turn struct {
 	EndDate   time.Time `json:"end_date"`
 	Active    bool      `json:"active"`
 
+	IncomesCounter float64 `json:"incomes_counter"`
+	NetIncomesCounter float64 `json:"netincomes_counter"`
+	ExpensesCounter float64 `json:"expenses_counter"`
+
+
 	UserID        uint           `json:"user_id"`
 	BranchID      uint           `json:"branch_id"`
-	TurnUserRoles []TurnUserRole `json:"turn_user_roles"`
-	TurnSafebox   `json:"turn_safebox"`
+	TurnUserRoles []TurnUserRole `json:"user_roles"`
+	SafeboxReceived TurnSafebox   `json:"safebox_received"`
+	SafeboxFinished TurnSafebox `json:"safebox_finished"`
 	Sales         []Sale      `json:"sales"`
 	Inventories   []Inventory `json:"inventories"`
 }
@@ -33,6 +39,6 @@ type TurnUserRole struct {
 type TurnSafebox struct {
 	ID
 
-	TurnID    uint `gorm:"unique" json:"turn_id"`
+	TurnID    uint `json:"turn_id"`
 	SafeboxID uint `gorm:"unique" json:"safebox_id"`
 }

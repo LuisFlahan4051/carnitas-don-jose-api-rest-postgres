@@ -6,9 +6,9 @@ import (
 
 type ID struct {
 	Id        uint       `json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	CreatedAt *time.Time `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 type FoodType struct {
@@ -36,7 +36,7 @@ type Food struct {
 	FoodTypeID uint `json:"food_type_id"`
 	FoodMeatID uint `json:"food_meat_id"`
 
-	FoodProducts []FoodProduct `json:"food_products"`
+	ProductFoods []ProductFood `json:"product_foods"`
 }
 
 type DrinkSize struct {
@@ -64,7 +64,7 @@ type Drink struct {
 	DrinkSizeID   uint `json:"drink_size_id"`
 	DrinkFlavorID uint `json:"drink_flavor_id"`
 
-	DrinkProducts []DrinkProduct `json:"drink_products"`
+	ProductDrinks []ProductDrink `json:"product_drinks"`
 }
 
 type Product struct {
@@ -74,14 +74,14 @@ type Product struct {
 	Price       float64 `gorm:"check: price >= 0" json:"price"`
 	Photo       string  `json:"photo"`
 
-	FoodProducts           []FoodProduct           `json:"food_products"`
-	DrinkProducts          []DrinkProduct          `json:"drink_products"`
+	ProductFoods           []ProductFood           `json:"product_foods"`
+	ProductDrinks          []ProductDrink          `json:"product_drinks"`
 	BranchProductsStock    []BranchProductStock    `json:"branch_products_stock"`
 	SalesProducts          []SaleProduct           `json:"sales_products"`
 	InventoryProductsStock []InventoryProductStock `json:"inventory_products_stock"`
 }
 
-type FoodProduct struct {
+type ProductFood struct {
 	ID
 
 	UnitQuantity     uint `gorm:"check: unit_quantity >= 0; default: 0" json:"unit_quantity"`
@@ -91,7 +91,7 @@ type FoodProduct struct {
 	ProductID uint `json:"product_id"`
 }
 
-type DrinkProduct struct {
+type ProductDrink struct {
 	ID
 
 	UnitQuantity     uint `gorm:"check: unit_quantity >= 0; default: 0" json:"unit_quantity"`

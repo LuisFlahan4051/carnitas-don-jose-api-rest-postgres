@@ -8,7 +8,9 @@ import (
 
 	"flag"
 
+	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database"
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/routes"
+
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 
@@ -17,28 +19,23 @@ import (
 
 var (
 	port *string
+	URLs []string
 )
 
 func main() {
 	initEnv()
 	initFlags()
 
+	database.TestConnection()
+
 	router := mux.NewRouter()
 
-	router.HandleFunc("/{id}", routes.HomeHandler)
-	router.HandleFunc("/crud/foodtype", routes.PostFoodType).Methods("POST")
-	router.HandleFunc("/crud/foodtypes", routes.GetFoodTypes).Methods("GET")
-	router.HandleFunc("/crud/foodtype/{id}", routes.GetFoodType).Methods("GET")
-	router.HandleFunc("/crud/foodtype/{id}", routes.PatchFoodType).Methods("PATCH")
-	router.HandleFunc("/root/foodtype/{id}", routes.RootPatchFoodType).Methods("PATCH")
-	router.HandleFunc("/crud/foodtype/{id}", routes.DeleteFoodType).Methods("DELETE")
-	router.HandleFunc("/root/foodtype/{id}", routes.RootDeleteFoodType).Methods("DELETE")
+	routes.SetMainHandleRoutes(router, &URLs)
 
-	router.HandleFunc("/crud/branch", routes.PostBranch).Methods("POST")
-	router.HandleFunc("/crud/branches", routes.GetBranches).Methods("GET")
-	router.HandleFunc("/crud/branch/{id}", routes.GetBranch).Methods("GET")
-	router.HandleFunc("/crud/branch/{id}", routes.DeleteBranch).Methods("DELETE")
-	router.HandleFunc("/crud/branch/{id}", routes.PatchBranch).Methods("PATCH")
+	prefix := "/testupload/"
+	router.PathPrefix(prefix).Handler(
+		http.StripPrefix(prefix, http.FileServer(http.Dir("./client/testUploadFile"))),
+	)
 
 	http.ListenAndServe(":"+*port, router)
 }

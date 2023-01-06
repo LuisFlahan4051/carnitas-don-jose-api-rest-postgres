@@ -1,5 +1,9 @@
 /tmp
 /out
+/.git
+/.github
+/storage
 main.exe
 main
 .air.toml
+.vscode

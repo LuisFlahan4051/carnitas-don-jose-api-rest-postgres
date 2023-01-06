@@ -254,6 +254,7 @@ type User struct {
 
 	Admin     bool `json:"admin"`
 	Root      bool `json:"root"`
+	Warning   bool `json:"warning"`
 	Verified  bool `json:"verified"`
 	Darktheme bool `json:"darktheme"`
 
@@ -261,7 +262,7 @@ type User struct {
 
 	Address      string    `json:"address"`
 	Born         time.Time `json:"born"`
-	DegreeStudy string    `gorm:"type:varchar(50)" json:"degree_study"`
+	DegreeStudy  string    `gorm:"type:varchar(50)" json:"degree_study"`
 	RelationShip string    `gorm:"type:varchar(50)" json:"relation_ship"`
 	Curp         string    `gorm:"type:varchar(50)" json:"curp"`
 	Rfc          string    `gorm:"type:varchar(50)" json:"rfc"`
@@ -358,12 +359,17 @@ type Turn struct {
 	End_date   time.Time `json:"end_date"`
 	Active     bool      `json:"active"`
 
-	UserID        uint           `json:"user_id"`
-	BranchID      uint           `json:"branch_id"`
-	TurnUserRoles []TurnUserRole `json:"turn_user_roles"`
-	TurnSafebox   `json:"turn_safebox"`
-	Sales         []Sale      `json:"sales"`
-	Inventories   []Inventory `json:"inventories"`
+	IncomesCounter    float64 `json:"incomes_counter"`
+	NetIncomesCounter float64 `json:"netincomes_counter"`
+	ExpensesCounter   float64 `json:"expenses_counter"`
+
+	UserID          uint           `json:"user_id"`
+	BranchID        uint           `json:"branch_id"`
+	TurnUserRoles   []TurnUserRole `json:"turn_user_roles"`
+	SafeboxReceived TurnSafebox    `json:"safebox_received"`
+	SafeboxFinished TurnSafebox    `json:"safebox_finished"`
+	Sales           []Sale         `json:"sales"`
+	Inventories     []Inventory    `json:"inventories"`
 }
 
 type TurnUserRole struct {

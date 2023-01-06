@@ -43,6 +43,13 @@ type ServerLogs struct {
 	CreateAt    time.Time `json:"create_at"`
 	Transaction string    `json:"transaction"`
 	UserID      uint      `json:"user_id"`
-	BranchID    *uint     `json:"branch_id"`
-	Root        *bool     `json:"root"`
+	BranchID    *uint     `json:"branch_id,omitempty"`
+	Root        *bool     `json:"root,omitempty"`
+}
+
+type Pagination struct {
+	Page  *int      `json:"page,omitempty"`
+	Today bool      `json:"today"`
+	Since time.Time `json:"since"`
+	To    time.Time `json:"to"`
 }

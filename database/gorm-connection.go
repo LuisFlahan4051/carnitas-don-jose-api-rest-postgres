@@ -11,6 +11,8 @@ import (
 
 var DB *gorm.DB
 
+// Need the gorm argments into the structs.
+// Can search it in github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database/schema/types/gorm-types.go
 func GetGormConnection() {
 	log.Println("Connecting to database...")
 

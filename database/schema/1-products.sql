@@ -91,7 +91,7 @@ CREATE TABLE products(
     branch_id INT NOT NULL
 );
 
-CREATE TABLE food_products(
+CREATE TABLE product_foods(
     id SERIAL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -107,7 +107,7 @@ CREATE TABLE food_products(
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE drink_products(
+CREATE TABLE product_drinks(
     id SERIAL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

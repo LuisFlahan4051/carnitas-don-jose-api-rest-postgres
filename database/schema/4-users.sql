@@ -23,7 +23,7 @@ CREATE TABLE users(
     photo TEXT,
 
     verified BOOLEAN DEFAULT false,
-    warning BOOLEAN,
+    warning BOOLEAN DEFAULT false,
     darktheme BOOLEAN DEFAULT false,
 
 

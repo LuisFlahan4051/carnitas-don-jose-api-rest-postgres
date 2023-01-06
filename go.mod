@@ -3,12 +3,19 @@ module github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres
 go 1.19
 
 require (
-	github.com/TwiN/go-color v1.4.0
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
 )
 
 require (
+	github.com/fatih/structtag v1.2.0 // indirect
+	github.com/gorilla/schema v1.2.0 // indirect
+	golang.org/x/image v0.2.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
+)
+
+require (
+	github.com/chai2010/webp v1.1.1
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect

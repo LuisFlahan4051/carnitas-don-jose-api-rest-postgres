@@ -7,8 +7,8 @@ import (
 type Role struct {
 	ID
 
-	Name        string `gorm:"type:varchar(50)" json:"name"`
-	AccessLevel uint   `gorm:"check: access_level >= 0; default: 0" json:"access_level"`
+	Name        string `json:"name"`
+	AccessLevel uint   `json:"access_level"`
 
 	BranchUserRoles  []BranchUserRole  `json:"branch_user_roles"`
 	TurnUserRoles    []TurnUserRole    `json:"turn_user_roles"`
@@ -18,46 +18,51 @@ type Role struct {
 type User struct {
 	ID
 
-	Name     string `gorm:"type:varchar(50)" json:"name"`
-	Lastname string `gorm:"type:varchar(50)" json:"lastname"`
-	Username string `gorm:"type:varchar(50)" json:"username"`
-	Password string `gorm:"type:varchar(50)" json:"password"`
-	Photo    string `json:"photo"`
+	Name     *string `json:"name,omitempty"`
+	Lastname *string `json:"lastname,omitempty"`
+	Username string  `json:"username"`
+	Password string  `json:"password"`
+	Photo    *string `json:"photo,omitempty"`
 
-	Verified  bool `json:"verified"`
-	Darktheme bool `json:"darktheme"`
+	// Just need to get the bytes of the file and save it.
+	// See registUser() at github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/routes/supervisorActions/actions.go
+	//ProfilePicture *multipart.File `json:"profile_picture,omitempty"`
 
-	ActiveContract bool `json:"active_contract"`
+	Verified  *bool `json:"verified,omitempty"`
+	Warning   *bool `json:"warning,omitempty"`
+	Darktheme *bool `json:"darktheme,omitempty"`
 
-	Address      string    `json:"address"`
-	Born         time.Time `json:"born"`
-	DegreeStudy  string    `gorm:"type:varchar(50)" json:"degree_study"`
-	RelationShip string    `gorm:"type:varchar(50)" json:"relation_ship"`
-	Curp         string    `gorm:"type:varchar(50)" json:"curp"`
-	Rfc          string    `gorm:"type:varchar(50)" json:"rfc"`
-	CitizenID    string    `gorm:"type:varchar(50)" json:"citizen_id"`
-	CredentialID string    `gorm:"type:varchar(50)" json:"credential_id"`
-	OriginState  string    `gorm:"type:varchar(50)" json:"origin_state"`
+	ActiveContract *bool `json:"active_contract,omitempty"`
 
-	Score          uint   `gorm:"check: score >= 0; default: 0" json:"score"`
-	Qualities      string `json:"qualities"`
-	Defects        string `json:"defects"`
-	OriginBranchID uint   `json:"originBranch_id"`
+	Address      *string    `json:"address,omitempty"`
+	Born         *time.Time `json:"born,omitempty"`
+	DegreeStudy  *string    `json:"degree_study,omitempty"`
+	RelationShip *string    `json:"relation_ship,omitempty"`
+	Curp         *string    `json:"curp,omitempty"`
+	Rfc          *string    `json:"rfc,omitempty"`
+	CitizenID    *string    `json:"citizen_id,omitempty"`
+	CredentialID *string    `json:"credential_id,omitempty"`
+	OriginState  *string    `json:"origin_state,omitempty"`
 
-	BranchID uint `json:"branch_id"`
+	Score          *uint   `json:"score,omitempty"`
+	Qualities      *string `json:"qualities,omitempty"`
+	Defects        *string `json:"defects,omitempty"`
+	OriginBranchID *uint   `json:"origin_branch_id,omitempty"`
 
-	InheritUserRoles   []Role              `json:"inherit_user_roles"`
-	UserPhones         []UserPhone         `json:"user_phones"`
-	UserMails          []UserMail          `json:"user_mails"`
-	UserReports        []UserReport        `json:"user_reports"`
-	MonetaryBounds     []MonetaryBound     `json:"monetary_bounds"`
-	MonetaryDiscounts  []MonetaryDiscount  `json:"monetary_discounts"`
-	BranchUserRoles    []Role              `json:"branch_user_roles"`
-	Turns              []Turn              `json:"turns"`
-	TurnUserRoles      []TurnUserRole      `json:"turn_user_roles"`
-	Sales              []Sale              `json:"sales"`
-	UserSafeboxActions []UserSafeboxAction `json:"safebox_actions"`
-	AdminNotifications []AdminNotification `json:"admin_notifications"`
+	BranchID *uint `json:"branch_id,omitempty"`
+
+	InheritUserRoles   []Role              `json:"inherit_user_roles,omitempty"`
+	UserPhones         []UserPhone         `json:"user_phones,omitempty"`
+	UserMails          []UserMail          `json:"user_mails,omitempty"`
+	UserReports        []UserReport        `json:"user_reports,omitempty"`
+	MonetaryBounds     []MonetaryBound     `json:"monetary_bounds,omitempty"`
+	MonetaryDiscounts  []MonetaryDiscount  `json:"monetary_discounts,omitempty"`
+	BranchUserRoles    []Role              `json:"branch_user_roles,omitempty"`
+	Turns              []Turn              `json:"turns,omitempty"`
+	TurnUserRoles      []TurnUserRole      `json:"turn_user_roles,omitempty"`
+	Sales              []Sale              `json:"sales,omitempty"`
+	UserSafeboxActions []UserSafeboxAction `json:"safebox_actions,omitempty"`
+	AdminNotifications []AdminNotification `json:"admin_notifications,omitempty"`
 }
 
 type InheritUserRole struct {

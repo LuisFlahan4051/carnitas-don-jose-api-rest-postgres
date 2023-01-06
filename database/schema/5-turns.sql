@@ -8,6 +8,10 @@ CREATE TABLE turns (
     end_date TIMESTAMP,
     active BOOLEAN,
 
+    incomes_counter REAL,
+	netincomes_counter REAL,
+	expenses_counter REAL,
+
     user_id INT NOT NULL,
     branch_id INT NOT NULL,
     PRIMARY KEY (id),
@@ -39,7 +43,7 @@ CREATE TABLE turn_safebox(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    turn_id INT NOT NULL UNIQUE,
+    turn_id INT NOT NULL,
     safebox_id INT NOT NULL UNIQUE,
     PRIMARY KEY (id),
     FOREIGN KEY (safebox_id) REFERENCES safeboxes(id) ON DELETE CASCADE ON UPDATE CASCADE,
