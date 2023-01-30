@@ -16,21 +16,36 @@ func GetLogs(pagination models.Pagination) ([]models.ServerLogs, error) {
 	db := database.Connect()
 	defer db.Close()
 
+	// nil pointers to default values
+	if pagination.Page == nil {
+		pagination.Page = new(int)
+	}
+	if pagination.To == nil {
+		pagination.To = &time.Time{}
+	}
+	if pagination.Since == nil {
+		pagination.Since = &time.Time{}
+	}
+	if pagination.Today == nil {
+		pagination.Today = new(bool)
+	}
+
 	// ------------------- CASE CONTROL Today > Page > Since > To
 
 	//Verify intervals and order
-	if pagination.Since.After(pagination.To) && !pagination.To.IsZero() {
+	if pagination.Since.After(*pagination.To) && !pagination.To.IsZero() {
 		pagination.Since, pagination.To = pagination.To, pagination.Since
 	}
 
 	//Set To to today hour 23:59:59 when Since exists and is unknown
 	if pagination.To.IsZero() && !pagination.Since.IsZero() {
 		today, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
-		pagination.To = today.Add(24 * time.Hour)
+		todayPtr := today.Add(24 * time.Hour)
+		pagination.To = &todayPtr
 	}
 
 	//Get logs by intervals of 30 items
-	if pagination.Page != nil && *pagination.Page > 0 && !pagination.Today {
+	if pagination.Page != nil && *pagination.Page > 0 && !*pagination.Today {
 		query = "SELECT id," +
 			" created_at," +
 			" transaction," +
@@ -65,12 +80,14 @@ func GetLogs(pagination models.Pagination) ([]models.ServerLogs, error) {
 	}
 
 	//Set Since and To to hour 00:00:00 and 23:59:59
-	if pagination.Today {
-		pagination.Since, _ = time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
-		pagination.To = pagination.Since.Add(24 * time.Hour)
+	if *pagination.Today {
+		sincePtr, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
+		pagination.Since = &sincePtr
+		toPtr := sincePtr.Add(24 * time.Hour)
+		pagination.To = &toPtr
 	}
 
-	// ------------------- QUERY
+	// ------------------- QUERY -------------------
 
 	query = "SELECT id," +
 		" created_at," +
@@ -80,7 +97,7 @@ func GetLogs(pagination models.Pagination) ([]models.ServerLogs, error) {
 		" root FROM server_logs" +
 		" WHERE created_at BETWEEN $1 AND $2" +
 		" ORDER BY created_at DESC"
-	rows, err := db.Query(query, pagination.Since, pagination.To)
+	rows, err := db.Query(query, *pagination.Since, *pagination.To)
 
 	if err != nil {
 		return logs, err

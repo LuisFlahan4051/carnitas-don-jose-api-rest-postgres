@@ -3,10 +3,6 @@ package crud
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"time"
 
@@ -19,46 +15,19 @@ func NewUser(user *models.User) error {
 	db := database.Connect()
 	defer db.Close()
 
-	//TODO:
-	date := time.Now()
-	name := "luis"
-	otherUser := models.User{
-		ID: models.ID{
-			Id:        24,
-			CreatedAt: &date,
-		},
-		Name:     &name,
-		Username: "Prueba final",
-		Password: "123456",
+	user.Username = commons.CleanSpaces(user.Username)
+	user.Password = commons.CleanSpaces(user.Password)
+	if user.Username == "" || user.Password == "" {
+		return errors.New("username and password is required")
 	}
 
-	query := "INSERT INTO users("
-	fieldsSlice, fieldsValuesMap := commons.GetStructFieldsNotNull(otherUser)
-	fields := strings.Join(fieldsSlice, ", ")
-	query += fields + ") VALUES ("
-	for i := 0; i < len(fieldsSlice)-1; i++ {
-		query += "$" + strconv.Itoa(i+1) + ", "
-	}
-	query += "$" + strconv.Itoa(len(fieldsSlice)) + ")"
-
-	allFieldsSlice, _ := commons.GetStructFieldsNotSlices(otherUser)
-	allFields := strings.Join(allFieldsSlice, ", ")
-	query += " RETURNING " + allFields
-
-	var data []interface{}
-
-	for _, field := range fieldsSlice {
-		valueString := fmt.Sprintf("%v", fieldsValuesMap[field])
-		regularExpresion := regexp.MustCompile(`\d{4}-\d{2}-\d{2}`)
-		if regularExpresion.MatchString(valueString) {
-			date, _ := time.Parse("2006-01-02", valueString)
-			data = append(data, date)
-		} else {
-			data = append(data, valueString)
-		}
+	user.Id = 0 // To don't add id field to query
+	query, data, err := commons.GetQuery("users", *user, 0, true)
+	if err != nil {
+		return err
 	}
 
-	err := db.QueryRow(query, data...).Scan(
+	err = db.QueryRow(query, data...).Scan(
 		&user.Id,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -101,15 +70,10 @@ func GetUsers(root bool) ([]models.User, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	var query string
+	query, _, _ := commons.GetQuery("users", models.User{}, 2, false)
 
-	query = "SELECT "
-	fieldsSlice, _ := commons.GetStructFieldsNotSlices(models.User{})
-	fields := strings.Join(fieldsSlice, ", ")
-	query += fields + " FROM users WHERE deleted_at IS NOT NULL"
-
-	if root {
-		query = "SELECT " + fields + " FROM users"
+	if !root {
+		query += " WHERE deleted_at IS NULL"
 	}
 
 	var users []models.User
@@ -168,63 +132,13 @@ func GetUser(id uint, root bool) (models.User, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query := "SELECT id," +
-		" created_at," +
-		" updated_at," +
-		" deleted_at," +
-		" name," +
-		" lastname," +
-		" username," +
-		" password," +
-		" photo," +
-		" verified," +
-		" warning," +
-		" darktheme," +
-		" active_contract," +
-		" address," +
-		" born," +
-		" degree_study," +
-		" relation_ship," +
-		" curp," +
-		" rfc," +
-		" citizen_id," +
-		" credential_id," +
-		" origin_state," +
-		" score," +
-		" qualities," +
-		" defects," +
-		" origin_branch_id," +
-		" branch_id FROM users WHERE id = $1 AND deleted_at IS NULL"
+	query, _, _ := commons.GetQuery("users", models.User{}, 2, false)
+	query += " WHERE id = $1"
 
-	if root {
-		query = "SELECT id," +
-			" created_at," +
-			" updated_at," +
-			" deleted_at," +
-			" name," +
-			" lastname," +
-			" username," +
-			" password," +
-			" photo," +
-			" verified," +
-			" warning," +
-			" darktheme," +
-			" active_contract," +
-			" address," +
-			" born," +
-			" degree_study," +
-			" relation_ship," +
-			" curp," +
-			" rfc," +
-			" citizen_id," +
-			" credential_id," +
-			" origin_state," +
-			" score," +
-			" qualities," +
-			" defects," +
-			" origin_branch_id," +
-			" branch_id FROM users WHERE id = $1"
+	if !root {
+		query += " AND deleted_at IS NULL"
 	}
+
 	err := db.QueryRow(query, id).Scan(
 		&user.Id,
 		&user.CreatedAt,
@@ -287,8 +201,14 @@ func DeleteUser(id uint, root bool) error {
 	}
 
 	query := "UPDATE users SET deleted_at = $1 WHERE id = $2"
-	result, _ := db.Exec(query, time.Now(), id)
-	rowsAffected, _ := result.RowsAffected()
+	result, err := db.Exec(query, time.Now(), id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 
 	if rowsAffected == 0 {
 		return errors.New("user doesn't exist")
@@ -297,243 +217,149 @@ func DeleteUser(id uint, root bool) error {
 	return nil
 }
 
-// TODO: fix this
-func UpdateUser(newUser *models.User, root bool) error {
+func UpdateUser(updatingUser *models.User, root bool) error {
 	db := database.Connect()
 	defer db.Close()
 
-	updatingUser, err := GetUser(newUser.Id, root)
-	if err != nil {
-		return errors.New("user doesn't exist")
-	}
-
-	//compare
+	currentDate := time.Now()
+	updatingUser.UpdatedAt = &currentDate
+	updatingUser.CreatedAt = nil
+	updatingUser.DeletedAt = nil
 
 	if root {
-		query := "UPDATE users SET" +
-			" created_at = $1," +
-			" updated_at = $2," +
-			" deleted_at = $3," +
-			" name = $4," +
-			" lastname = $5," +
-			" username = $26," +
-			" password = $6," +
-			" photo = $7," +
-			" verified = $8," +
-			" warning = $27," +
-			" darktheme = $9," +
-			" active_contract = $10," +
-			" address = $11," +
-			" born = $12," +
-			" degree_study = $13," +
-			" relation_ship = $14," +
-			" curp = $15," +
-			" rfc = $16," +
-			" citizen_id = $17," +
-			" credential_id = $18," +
-			" origin_state = $19," +
-			" score = $20," +
-			" qualities = $21," +
-			" defects = $22," +
-			" origin_branch_id = $23," +
-			" branch_id = $24 WHERE id = $25" +
-			" RETURNING id" +
-			" created_at," +
-			" updated_at," +
-			" deleted_at," +
-			" name," +
-			" lastname," +
-			" username," +
-			" password," +
-			" photo," +
-			" verified," +
-			" warning," +
-			" darktheme," +
-			" active_contract," +
-			" address," +
-			" born," +
-			" degree_study," +
-			" relation_ship," +
-			" curp," +
-			" rfc," +
-			" citizen_id," +
-			" credential_id," +
-			" origin_state," +
-			" score," +
-			" qualities," +
-			" defects," +
-			" origin_branch_id," +
-			" branch_id"
-		err = db.QueryRow(query,
-			query,
-			updatingUser.CreatedAt,
-			time.Now(),
-			updatingUser.DeletedAt,
-			updatingUser.Name,
-			updatingUser.Lastname,
-			updatingUser.Password,
-			updatingUser.Photo,
-			updatingUser.Verified,
-			updatingUser.Darktheme,
-			updatingUser.ActiveContract,
-			updatingUser.Address,
-			updatingUser.Born,
-			updatingUser.DegreeStudy,
-			updatingUser.RelationShip,
-			updatingUser.Curp,
-			updatingUser.Rfc,
-			updatingUser.CitizenID,
-			updatingUser.CredentialID,
-			updatingUser.OriginState,
-			updatingUser.Score,
-			updatingUser.Qualities,
-			updatingUser.Defects,
-			updatingUser.OriginBranchID,
-			updatingUser.BranchID,
-			updatingUser.Username,
-			updatingUser.Warning,
-		).Scan(
-			&newUser.Id,
-			&newUser.CreatedAt,
-			&newUser.UpdatedAt,
-			&newUser.DeletedAt,
-			&newUser.Name,
-			&newUser.Lastname,
-			&newUser.Username,
-			&newUser.Password,
-			&newUser.Photo,
-			&newUser.Verified,
-			&newUser.Warning,
-			&newUser.Darktheme,
-			&newUser.ActiveContract,
-			&newUser.Address,
-			&newUser.Born,
-			&newUser.DegreeStudy,
-			&newUser.RelationShip,
-			&newUser.Curp,
-			&newUser.Rfc,
-			&newUser.CitizenID,
-			&newUser.CredentialID,
-			&newUser.OriginState,
-			&newUser.Score,
-			&newUser.Qualities,
-			&newUser.Defects,
-			&newUser.OriginBranchID,
-			&newUser.BranchID)
+		query, data, err := commons.GetQuery("users", *updatingUser, 1, true)
+		if err != nil {
+			return err
+		}
+
+		err = db.QueryRow(query, data...).Scan(
+			&updatingUser.Id,
+			&updatingUser.CreatedAt,
+			&updatingUser.UpdatedAt,
+			&updatingUser.DeletedAt,
+			&updatingUser.Name,
+			&updatingUser.Lastname,
+			&updatingUser.Username,
+			&updatingUser.Password,
+			&updatingUser.Photo,
+			&updatingUser.Verified,
+			&updatingUser.Warning,
+			&updatingUser.Darktheme,
+			&updatingUser.ActiveContract,
+			&updatingUser.Address,
+			&updatingUser.Born,
+			&updatingUser.DegreeStudy,
+			&updatingUser.RelationShip,
+			&updatingUser.Curp,
+			&updatingUser.Rfc,
+			&updatingUser.CitizenID,
+			&updatingUser.CredentialID,
+			&updatingUser.OriginState,
+			&updatingUser.Score,
+			&updatingUser.Qualities,
+			&updatingUser.Defects,
+			&updatingUser.OriginBranchID,
+			&updatingUser.BranchID)
 
 		return err
 	}
 
-	if userIsDeleted(newUser.Id) {
+	if userIsDeleted(updatingUser.Id) {
 		return errors.New("user is deleted")
 	}
 
-	query := "UPDATE users SET" +
-		" updated_at = $1," +
-		" name = $2," +
-		" lastname = $3," +
-		" username = $24," +
-		" password = $4," +
-		" photo = $5," +
-		" verified = $6," +
-		" warning = $25," +
-		" darktheme = $7," +
-		" active_contract = $8," +
-		" address = $9," +
-		" born = $10," +
-		" degree_study = $11," +
-		" relation_ship = $12," +
-		" curp = $13," +
-		" rfc = $14," +
-		" citizen_id = $15," +
-		" credential_id = $16," +
-		" origin_state = $17," +
-		" score = $18," +
-		" qualities = $19," +
-		" defects = $20," +
-		" origin_branch_id = $21," +
-		" branch_id = $22 WHERE id = $23" +
-		" RETURNING id," +
-		" created_at," +
-		" updated_at," +
-		" deleted_at," +
-		" name," +
-		" lastname," +
-		" username," +
-		" password," +
-		" photo," +
-		" verified," +
-		" warning," +
-		" darktheme," +
-		" active_contract," +
-		" address," +
-		" born," +
-		" degree_study," +
-		" relation_ship," +
-		" curp," +
-		" rfc," +
-		" citizen_id," +
-		" credential_id," +
-		" origin_state," +
-		" score," +
-		" qualities," +
-		" defects," +
-		" origin_branch_id," +
-		" branch_id"
-	err = db.QueryRow(query,
-		query,
-		time.Now(),
-		updatingUser.Name,
-		updatingUser.Lastname,
-		updatingUser.Password,
-		updatingUser.Photo,
-		updatingUser.Verified,
-		updatingUser.Darktheme,
-		updatingUser.ActiveContract,
-		updatingUser.Address,
-		updatingUser.Born,
-		updatingUser.DegreeStudy,
-		updatingUser.RelationShip,
-		updatingUser.Curp,
-		updatingUser.Rfc,
-		updatingUser.CitizenID,
-		updatingUser.CredentialID,
-		updatingUser.OriginState,
-		updatingUser.Score,
-		updatingUser.Qualities,
-		updatingUser.Defects,
-		updatingUser.OriginBranchID,
-		updatingUser.BranchID,
-		newUser.Id,
-		updatingUser.Username,
-		updatingUser.Warning).Scan(
-		&newUser.Id,
-		&newUser.CreatedAt,
-		&newUser.UpdatedAt,
-		&newUser.DeletedAt,
-		&newUser.Name,
-		&newUser.Username,
-		&newUser.Lastname,
-		&newUser.Password,
-		&newUser.Photo,
-		&newUser.Verified,
-		&newUser.Warning,
-		&newUser.Darktheme,
-		&newUser.ActiveContract,
-		&newUser.Address,
-		&newUser.Born,
-		&newUser.DegreeStudy,
-		&newUser.RelationShip,
-		&newUser.Curp,
-		&newUser.Rfc,
-		&newUser.CitizenID,
-		&newUser.CredentialID,
-		&newUser.OriginState,
-		&newUser.Score,
-		&newUser.Qualities,
-		&newUser.Defects,
-		&newUser.OriginBranchID,
-		&newUser.BranchID)
+	query, data, err := commons.GetQuery("users", *updatingUser, 1, true)
+
+	if err != nil {
+		return err
+	}
+
+	err = db.QueryRow(query, data...).Scan(
+		&updatingUser.Id,
+		&updatingUser.CreatedAt,
+		&updatingUser.UpdatedAt,
+		&updatingUser.DeletedAt,
+		&updatingUser.Name,
+		&updatingUser.Lastname,
+		&updatingUser.Username,
+		&updatingUser.Password,
+		&updatingUser.Photo,
+		&updatingUser.Verified,
+		&updatingUser.Warning,
+		&updatingUser.Darktheme,
+		&updatingUser.ActiveContract,
+		&updatingUser.Address,
+		&updatingUser.Born,
+		&updatingUser.DegreeStudy,
+		&updatingUser.RelationShip,
+		&updatingUser.Curp,
+		&updatingUser.Rfc,
+		&updatingUser.CitizenID,
+		&updatingUser.CredentialID,
+		&updatingUser.OriginState,
+		&updatingUser.Score,
+		&updatingUser.Qualities,
+		&updatingUser.Defects,
+		&updatingUser.OriginBranchID,
+		&updatingUser.BranchID)
 
 	return err
+}
+
+//
+
+func NewRole(role *models.Role) error {
+	db := database.Connect()
+	defer db.Close()
+
+	if role.AccessLevel <= 1 {
+		return errors.New("access level must be greater than 1, new role can't be root")
+	}
+
+	query, data, err := commons.GetQuery("roles", *role, 0, true)
+	if err != nil {
+		return err
+	}
+
+	err = db.QueryRow(query, data...).Scan(
+		&role.Id,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+		&role.DeletedAt,
+		&role.Name,
+		&role.AccessLevel)
+	if err != nil {
+		return err
+	}
+	if role.Id == 0 {
+		return errors.New("can't create role")
+	}
+
+	return nil
+}
+
+func NewInheritUserRole(inheritUserRole *models.InheritUserRole) error {
+	db := database.Connect()
+	defer db.Close()
+
+	query, data, err := commons.GetQuery("inherit_user_roles", *inheritUserRole, 0, true)
+	if err != nil {
+		return err
+	}
+
+	err = db.QueryRow(query, data...).Scan(
+		&inheritUserRole.Id,
+		&inheritUserRole.CreatedAt,
+		&inheritUserRole.UpdatedAt,
+		&inheritUserRole.DeletedAt,
+		&inheritUserRole.UserID,
+		&inheritUserRole.RoleID)
+	if err != nil {
+		return err
+	}
+	if inheritUserRole.Id == 0 {
+		return errors.New("can't create inherit user role")
+	}
+
+	return nil
 }

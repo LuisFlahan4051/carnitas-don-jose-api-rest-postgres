@@ -30,13 +30,21 @@ func main() {
 
 	router := mux.NewRouter()
 
+	// ADDING ROUTES
 	routes.SetMainHandleRoutes(router, &URLs)
 
-	prefix := "/testupload/"
+	// SERVE STATIC FILES
+	prefix := "/testupload"
 	router.PathPrefix(prefix).Handler(
 		http.StripPrefix(prefix, http.FileServer(http.Dir("./client/testUploadFile"))),
 	)
 
+	publicUserFilesDir := "/users/"
+	router.PathPrefix(publicUserFilesDir).Handler(
+		http.StripPrefix(publicUserFilesDir, http.FileServer(http.Dir("./storage/public/users"))),
+	)
+
+	// RUN SERVER
 	http.ListenAndServe(":"+*port, router)
 }
 

@@ -7,8 +7,8 @@ func SetCommonHandleActions(router *mux.Router, URLs *[]string) {
 	router.HandleFunc(route, seeMyProfile).Methods("GET")
 	*URLs = append(*URLs, route)
 
-	route = "/user/{user_id}/profile/picture"
-	router.HandleFunc(route, getProfilePicture).Methods("GET")
+	route = "/users/{user_id}/profile/picture"
+	//router.HandleFunc(route, getProfilePicture).Methods("GET")
 	*URLs = append(*URLs, route)
 
 	route = "/my/profile/change/credentials"

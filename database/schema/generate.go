@@ -77,5 +77,4 @@ func Generate(database string, user string) {
 		log.Print("\n" + out.String())
 		out.Reset()
 	}
-
 }

@@ -48,8 +48,8 @@ type ServerLogs struct {
 }
 
 type Pagination struct {
-	Page  *int      `json:"page,omitempty"`
-	Today bool      `json:"today"`
-	Since time.Time `json:"since"`
-	To    time.Time `json:"to"`
+	Page  *int       `json:"page,omitempty"`
+	Today *bool      `json:"today"`
+	Since *time.Time `json:"since"`
+	To    *time.Time `json:"to"`
 }

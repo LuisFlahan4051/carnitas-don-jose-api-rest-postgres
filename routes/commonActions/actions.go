@@ -1,12 +1,10 @@
 package commonActions
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func seeMyProfile(writer http.ResponseWriter, request *http.Request) {}
-
-func getProfilePicture(writer http.ResponseWriter, request *http.Request) {
-
-}
 
 func changeMyMainCredentials(writer http.ResponseWriter, request *http.Request) {}
 

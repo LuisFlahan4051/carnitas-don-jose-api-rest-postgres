@@ -2,10 +2,10 @@ package supervisorActions
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"errors"
 	"os"
-
-	"strconv"
 
 	"net/http"
 
@@ -19,8 +19,15 @@ import (
 func seeBranch(writer http.ResponseWriter, request *http.Request) {}
 
 func registNewUser(writer http.ResponseWriter, request *http.Request) {
+	bufferId, _, err := commons.Authentication(request, commons.SUPERVISOR)
+	root := false
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+
 	//Need Content-Type: multipart/form-data sending by inputs of a form, Max 33MB
-	err := request.ParseMultipartForm(32 << 20)
+	err = request.ParseMultipartForm(32 << 20)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
 		return
@@ -30,17 +37,16 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 	var user models.User
 
 	file, handle, err := request.FormFile("profile_picture")
-
-	var nonFile bool
+	existFile := true
 	if err != nil {
 		if err.Error() != "http: no such file" {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
-		nonFile = true
+		existFile = false
 	}
 
-	if !nonFile {
+	if existFile {
 		defer file.Close()
 
 		if !commons.FileIsImage(handle.Filename) {
@@ -48,60 +54,64 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		err = schema.NewDecoder().Decode(&user, request.Form)
-		if err != nil {
-			commons.Logcatch(writer, http.StatusBadRequest, err)
-			return
-		}
+		_ = schema.NewDecoder().Decode(&user, request.Form)
 
 		err = crud.NewUser(&user)
 		if err != nil {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
+
+		user.Id = commons.UserExists(user.Id)
+		if user.Id == 0 {
+			commons.Logcatch(writer, http.StatusBadRequest, errors.New("user do not created"))
+			return
+		}
+
 		// Save the file in the server
 		newFileName := "profile_picture.webp"
-		pathStorage := "./storage/users/" + strconv.Itoa(int(user.Id)) + "/profile/picture/"
+		localPathStorage := fmt.Sprintf("./storage/public/users/%d/profile/picture/", user.Id)
 
-		err = commons.SavePictureAsWebp(file, pathStorage, newFileName)
+		err = commons.SavePictureAsWebp(file, localPathStorage, newFileName)
+
 		if err != nil {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
 
-		storage := os.Getenv("HTTP") + "://" + os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/user/" + strconv.Itoa(int(user.Id)) + "/profile/picture"
-		user.Photo = &storage
+		pathStorage := fmt.Sprintf("%s://%s:%s/users/%d/profile/picture/%s", os.Getenv("HTTP"), os.Getenv("SERVERHOST"), os.Getenv("SERVERPORT"), user.Id, newFileName)
 
-		//TODO: CORREGIR ESTO
-		err = crud.UpdateUser(&models.User{
-			ID: models.ID{
-				Id: user.Id,
-			},
-			Photo: &storage,
-		}, false)
+		user.Photo = &pathStorage
+		err = crud.UpdateUser(&user, false)
 		if err != nil {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
 
+		commons.SaveServerActionLog(models.ServerLogs{
+			UserID:      bufferId,
+			Root:        &root,
+			Transaction: "registNewUser",
+		})
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusCreated)
 		json.NewEncoder(writer).Encode(user)
 		return
 	}
 
-	/*err = schema.NewDecoder().Decode(&user, request.Form)
-
-	if err.Error() != "schema: invalid path \"profile_picture\"" {
-		commons.Logcatch(writer, http.StatusBadRequest, err)
-		return
-	}*/
+	_ = schema.NewDecoder().Decode(&user, request.Form)
 
 	err = crud.NewUser(&user)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
 		return
 	}
+
+	commons.SaveServerActionLog(models.ServerLogs{
+		UserID:      bufferId,
+		Root:        &root,
+		Transaction: "registNewUser",
+	})
 
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusCreated)
