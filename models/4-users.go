@@ -10,9 +10,9 @@ type Role struct {
 	Name        string `json:"name"`
 	AccessLevel uint   `json:"access_level"`
 
-	BranchUserRoles  []BranchUserRole  `json:"branch_user_roles"`
-	TurnUserRoles    []TurnUserRole    `json:"turn_user_roles"`
-	InheritUserRoles []InheritUserRole `json:"inherit_user_roles"`
+	BranchUserRoles  []BranchUserRole  `json:"branch_user_roles,omitempty"`
+	TurnUserRoles    []TurnUserRole    `json:"turn_user_roles,omitempty"`
+	InheritUserRoles []InheritUserRole `json:"inherit_user_roles,omitempty"`
 }
 
 type User struct {
@@ -75,8 +75,8 @@ type InheritUserRole struct {
 type UserPhone struct {
 	ID
 
-	Phone string `gorm:"type:varchar(50)" json:"phone"`
-	Main  bool   `json:"main"`
+	Phone string `json:"phone"`
+	Main  *bool  `json:"main,omitempty"`
 
 	UserID uint `json:"user_id"`
 }
@@ -84,8 +84,8 @@ type UserPhone struct {
 type UserMail struct {
 	ID
 
-	Mail string `gorm:"type:varchar(50)" json:"mail"`
-	Main bool   `json:"main"`
+	Mail string `json:"mail"`
+	Main *bool  `json:"main,omitempty"`
 
 	UserID uint `json:"user_id"`
 }

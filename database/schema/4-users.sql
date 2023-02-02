@@ -4,7 +4,7 @@ CREATE TABLE roles(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    name VARCHAR(50),
+    name VARCHAR(50) NOT NULL,
     access_level INT NOT NULL,
 
     PRIMARY KEY (id)
@@ -69,8 +69,8 @@ CREATE TABLE user_phones (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
-    phone VARCHAR(25),
-    main BOOLEAN,
+    phone VARCHAR(25) UNIQUE NOT NULL,
+    main BOOLEAN DEFAULT FALSE,
 
     user_id INT NOT NULL,
     PRIMARY KEY (id),
@@ -82,8 +82,9 @@ CREATE TABLE user_mails (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
-    mail VARCHAR(50),
-    main BOOLEAN,
+    
+    mail VARCHAR(50) UNIQUE NOT NULL,
+    main BOOLEAN DEFAULT FALSE,
 
     user_id INT NOT NULL,
     PRIMARY KEY (id),
@@ -96,9 +97,9 @@ CREATE TABLE user_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT,
+    reason TEXT NOT NULL,
 
-    user_id INT,
+    user_id INT NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -109,8 +110,8 @@ CREATE TABLE monetary_bounds(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT,
-    bound REAL,
+    reason TEXT NOT NULL,
+    bound REAL NOT NULL,
 
     user_id INT,
     PRIMARY KEY (id),
@@ -123,8 +124,8 @@ CREATE TABLE monetary_discounts(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT,
-    discount REAL,
+    reason TEXT NOT NULL,
+    discount REAL NOT NULL,
 
     user_id INT,
     PRIMARY KEY (id),

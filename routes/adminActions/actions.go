@@ -111,7 +111,7 @@ func seeUsers(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	commons.SaveServerActionLog(models.ServerLogs{
+	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      bufferId,
 		Root:        &root,
 		Transaction: "seeUsers",
@@ -142,7 +142,7 @@ func seeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	commons.SaveServerActionLog(models.ServerLogs{
+	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      bufferId,
 		Root:        &root,
 		Transaction: "seeUser",
@@ -181,7 +181,7 @@ func dropUser(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	commons.SaveServerActionLog(models.ServerLogs{
+	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      bufferId,
 		Root:        &root,
 		Transaction: "dropUser",
@@ -243,7 +243,7 @@ func changeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	commons.SaveServerActionLog(models.ServerLogs{
+	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      bufferId,
 		Root:        &root,
 		Transaction: "UpdateUser",

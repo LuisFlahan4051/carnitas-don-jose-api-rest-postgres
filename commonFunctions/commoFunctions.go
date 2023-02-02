@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database"
-	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/models"
 	"github.com/chai2010/webp"
 )
 
@@ -283,6 +282,50 @@ func GetQuery(table string, strc interface{}, operation uint, returning bool) (s
 	return query, data, nil
 }
 
+// tables := make(map[string]interface{}); tables["tableName1"] = models.Table1; tables["tableName2"] = models.Table2; ... RETURNS a query string
+func GetMixSelect(tables map[string]interface{}) string {
+
+	var mixFields []string
+	var mixTables []string
+
+	for table, strct := range tables {
+		log.Println(table)
+		log.Println(strct)
+
+		nameSingleTable := table + "_single"
+		tableAndSingleTable := fmt.Sprintf("%s %s", table, nameSingleTable)
+
+		mixTables = append(mixTables, tableAndSingleTable)
+
+		fields, _ := GetStructFieldsWithoutSlices(strct)
+		var tableAndFields []string
+
+		for _, field := range fields {
+			tableAndFields = append(tableAndFields, fmt.Sprintf("%s.%s", nameSingleTable, field))
+		}
+		mixFields = append(mixFields, strings.Join(tableAndFields, ", "))
+	}
+
+	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(mixFields, ", "), strings.Join(mixTables, ", "))
+
+	return query
+}
+
+func IsDeleted(table string, id uint) bool {
+	db := database.Connect()
+	defer db.Close()
+
+	var deletedAt *time.Time
+	query := fmt.Sprintf("SELECT deleted_at FROM %s WHERE id = $1", table)
+	err := db.QueryRow(query, id).Scan(&deletedAt)
+
+	if err != nil {
+		return false
+	}
+
+	return deletedAt != nil
+}
+
 // ------------------------ Manipulate Images ------------------------ //
 
 func SavePictureAsWebp(file io.Reader, filePath string, fileName string) error {
@@ -325,7 +368,7 @@ func FileIsImage(fileName string) bool {
 
 // -------------------------- User Validations -------------------------- //
 
-// validate (request) vars and returns userID, accessLevel, error
+// validate (request) vars -> ["admin_username", "admin_password", "root"] and returns userID, accessLevel, error
 func Authentication(request *http.Request, maxAccessLevel uint) (uint, uint, error) {
 	if request.URL.Query().Get("admin_username") == "" || request.URL.Query().Get("admin_password") == "" {
 		return 0, 0, errors.New("need credentials to access this resource")
@@ -433,21 +476,6 @@ func UserExists(id uint) uint {
 }
 
 // ------------------------- Server Utils ------------------------- //
-
-// Save a log in the database
-func SaveServerActionLog(serverLog models.ServerLogs) {
-	db := database.Connect()
-	defer db.Close()
-
-	query := "INSERT INTO server_logs (transaction, user_id, branch_id, root, created_at) VALUES ($1, $2, $3, $4, $5)"
-	_, err := db.Exec(query, serverLog.Transaction, serverLog.UserID, serverLog.BranchID, serverLog.Root, time.Now())
-
-	if err != nil {
-		log.Println("Error saving server action log: " + err.Error())
-	}
-
-	log.Println(serverLog.Transaction + " Root: " + strconv.FormatBool(*serverLog.Root))
-}
 
 // Prints a log error and sends it to the client
 func Logcatch(writer http.ResponseWriter, status int, err error) {

@@ -88,7 +88,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		commons.SaveServerActionLog(models.ServerLogs{
+		crud.NewServerActionLog(models.ServerLogs{
 			UserID:      bufferId,
 			Root:        &root,
 			Transaction: "registNewUser",
@@ -107,7 +107,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	commons.SaveServerActionLog(models.ServerLogs{
+	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      bufferId,
 		Root:        &root,
 		Transaction: "registNewUser",

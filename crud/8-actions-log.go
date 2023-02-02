@@ -2,6 +2,8 @@ package crud
 
 import (
 	"errors"
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database"
@@ -121,4 +123,31 @@ func GetLogs(pagination models.Pagination) ([]models.ServerLogs, error) {
 	}
 
 	return logs, nil
+}
+
+func NewServerActionLog(serverLog models.ServerLogs) {
+	db := database.Connect()
+	defer db.Close()
+
+	query := "INSERT INTO server_logs (transaction, user_id, branch_id, root, created_at) VALUES ($1, $2, $3, $4, $5)"
+	_, err := db.Exec(query, serverLog.Transaction, serverLog.UserID, serverLog.BranchID, serverLog.Root, time.Now())
+
+	if err != nil {
+		log.Println("Error saving server action log: " + err.Error())
+	}
+
+	log.Println(serverLog.Transaction + " Root: " + strconv.FormatBool(*serverLog.Root))
+}
+
+func DeleteLogs() error {
+	db := database.Connect()
+	defer db.Close()
+
+	query := "TRUNCATE TABLE server_logs"
+	_, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
