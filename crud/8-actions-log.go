@@ -221,19 +221,25 @@ func GetNotifications(pagination models.Pagination, root bool) ([]models.AdminNo
 
 	//Get logs by intervals of 30 items
 	if pagination.Page != nil && *pagination.Page > 0 && !*pagination.Today {
+		deleteNull := ""
 		if !root {
-			query += " WHERE deleted_at IS NULL"
+			deleteNull = "WHERE deleted_at IS NULL"
 		}
-		query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT 30 OFFSET %d", (*pagination.Page-1)*30) // if wrong try ORDER BY id DESC
+
+		query += fmt.Sprintf(" %s ORDER BY created_at DESC LIMIT 30 OFFSET %d", deleteNull, (*pagination.Page-1)*30) // if wrong try ORDER BY id DESC
 	} else {
 		sinceSplit := strings.Split(pagination.Since.String(), " ")
 		since := fmt.Sprintf("%s %s", sinceSplit[0], sinceSplit[1])
 		toSplit := strings.Split(pagination.To.String(), " ")
 		to := fmt.Sprintf("%s %s", toSplit[0], toSplit[1])
-		query += fmt.Sprintf(" WHERE created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", since, to)
+
+		deleteNull := ""
 		if !root {
-			query += " AND deleted_at IS NULL"
+			deleteNull = "deleted_at IS NULL AND"
 		}
+
+		query += fmt.Sprintf(" WHERE %s created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", deleteNull, since, to)
+
 	}
 
 	// ------------------- EXECUTE -------------------
@@ -261,6 +267,8 @@ func GetNotifications(pagination models.Pagination, root bool) ([]models.AdminNo
 		if err != nil {
 			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
+
+		notifications = append(notifications, notification)
 	}
 
 	if len(notifications) == 0 {
@@ -397,7 +405,7 @@ func NewNotificationImage(notificationImage *models.AdminNotificationImage) erro
 	notificationImage.CreatedAt = &currentDate
 
 	tableName := "notification_images"
-	query, data, err := commons.GetQuery(tableName, *notificationImage, 0, false)
+	query, data, err := commons.GetQuery(tableName, *notificationImage, 0, true)
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -431,7 +439,7 @@ func GetNotificationImages(id uint, root bool) ([]models.AdminNotificationImage,
 	if err != nil {
 		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
-	query += " WHERE id = $1"
+	query += " WHERE notification_id = $1"
 
 	if !root {
 		query += " AND deleted_at IS NULL"

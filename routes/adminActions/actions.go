@@ -35,10 +35,15 @@ func seeNotifications(writer http.ResponseWriter, request *http.Request) {
 		// Getting data from body
 		err = json.NewDecoder(request.Body).Decode(&pagination)
 
+		// If just enter to the route, it will show the logs of today
 		if err != nil {
-			// If just enter to the route, it will show the logs of today
-			today := true
-			pagination.Today = &today
+			if err.Error() == "EOF" {
+				today := true
+				pagination.Today = &today
+			} else {
+				commons.Logcatch(writer, http.StatusBadRequest, err)
+				return
+			}
 		}
 	}
 
@@ -48,14 +53,12 @@ func seeNotifications(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	for _, notification := range notifications {
-		images, err := crud.GetNotificationImages(notification.Id, root)
+	for i := 0; i < len(notifications); i++ {
+		notifications[i].Images, err = crud.GetNotificationImages(notifications[i].Id, root)
 		if err != nil && !strings.Contains(err.Error(), "no images found") {
 			commons.Logcatch(writer, http.StatusInternalServerError, err)
 			return
 		}
-		notification.Images = images
-		notifications = append(notifications, notification)
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{

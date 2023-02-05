@@ -3,6 +3,7 @@ package supervisorActions
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"errors"
 	"os"
@@ -54,7 +55,9 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		schema.NewDecoder().Decode(&user, request.Form)
+		decoderFormFields := schema.NewDecoder()
+		decoderFormFields.SetAliasTag("json")
+		decoderFormFields.Decode(&user, request.Form)
 
 		err = crud.NewUser(&user)
 		if err != nil {
@@ -147,15 +150,19 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	//TODO: cant receive type field, something wrong with the decoder
+
 	//Need Content-Type: multipart/form-data sending by inputs of a form, Max 33MB
 	err = request.ParseMultipartForm(32 << 20) // 32<<20 = 32 * 2^20 = 33,554,432 bits = 32.768 MB
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "EOF") {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
 		return
 	}
 
 	var notification models.AdminNotification
-	schema.NewDecoder().Decode(&notification, request.Form)
+	decoderFormFields := schema.NewDecoder()
+	decoderFormFields.SetAliasTag("json")
+	decoderFormFields.Decode(&notification, request.Form)
 
 	err = crud.NewNotification(&notification)
 	if err != nil {
@@ -178,7 +185,7 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 		}
 		defer fileBuffer.Close()
 
-		newFileName := fmt.Sprintf("%d.webp", iterator)
+		newFileName := fmt.Sprintf("%d.webp", iterator+1)
 		localPathStorage := fmt.Sprintf("./storage/public/notifications/%d/images/", notification.Id)
 
 		err = commons.SavePictureAsWebp(fileBuffer, localPathStorage, newFileName)
@@ -192,6 +199,12 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 		image := models.AdminNotificationImage{
 			Image:          pathStorage,
 			NotificationID: notification.Id,
+		}
+
+		err = crud.NewNotificationImage(&image)
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, err)
+			return
 		}
 
 		notification.Images = append(notification.Images, image)

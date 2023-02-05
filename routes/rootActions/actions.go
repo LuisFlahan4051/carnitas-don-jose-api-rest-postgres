@@ -144,7 +144,6 @@ func seeSeverLogs(writer http.ResponseWriter, request *http.Request) {
 				return
 			}
 		}
-
 	}
 
 	logs, err := crud.GetLogs(pagination)
