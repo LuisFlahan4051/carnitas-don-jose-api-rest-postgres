@@ -2,7 +2,7 @@ package crud
 
 import (
 	"errors"
-	"log"
+	"fmt"
 
 	"time"
 
@@ -19,9 +19,14 @@ func NewRole(role *models.Role) error {
 		return errors.New("access level must be greater than 1, new role can't be root")
 	}
 
-	query, data, err := commons.GetQuery("roles", *role, 0, true)
+	tableName := "roles"
+	currentDate := time.Now()
+	role.UpdatedAt = &currentDate
+	role.CreatedAt = &currentDate
+
+	query, data, err := commons.GetQuery(tableName, *role, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -30,9 +35,10 @@ func NewRole(role *models.Role) error {
 		&role.UpdatedAt,
 		&role.DeletedAt,
 		&role.Name,
-		&role.AccessLevel)
+		&role.AccessLevel,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if role.Id == 0 {
 		return errors.New("can't create role")
@@ -45,7 +51,8 @@ func GetRole(id uint, root bool) (models.Role, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("roles", models.Role{}, 2, false)
+	tableName := "roles"
+	query, _, _ := commons.GetQuery(tableName, models.Role{}, 2, false)
 	query += " WHERE id = $1"
 
 	if !root {
@@ -59,10 +66,14 @@ func GetRole(id uint, root bool) (models.Role, error) {
 		&role.UpdatedAt,
 		&role.DeletedAt,
 		&role.Name,
-		&role.AccessLevel)
-
+		&role.AccessLevel,
+	)
 	if err != nil {
-		return role, errors.New("role doesn't exist")
+		return role, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
+
+	if role.Id == 0 {
+		return role, errors.New("role not found")
 	}
 
 	return role, nil
@@ -80,10 +91,15 @@ func NewUser(user *models.User) error {
 		return errors.New("username and password is required")
 	}
 
+	tableName := "users"
 	user.Id = 0 // To don't add id field to query
-	query, data, err := commons.GetQuery("users", *user, 0, true)
+	currentDate := time.Now()
+	user.UpdatedAt = &currentDate
+	user.CreatedAt = &currentDate
+
+	query, data, err := commons.GetQuery(tableName, *user, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -115,7 +131,8 @@ func NewUser(user *models.User) error {
 		&user.OriginBranchID,
 		&user.BranchID)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+
 	}
 	if user.Id == 0 {
 		return errors.New("can't create user")
@@ -129,7 +146,11 @@ func GetUsers(root bool) ([]models.User, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("users", models.User{}, 2, false)
+	tableName := "users"
+	query, _, err := commons.GetQuery(tableName, models.User{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
@@ -139,7 +160,7 @@ func GetUsers(root bool) ([]models.User, error) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		return users, err
+		return nil, fmt.Errorf("can't execute the query %s ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -174,13 +195,13 @@ func GetUsers(root bool) ([]models.User, error) {
 			&user.OriginBranchID,
 			&user.BranchID)
 		if err != nil {
-			return users, err
+			return nil, fmt.Errorf("error scanning struct %s ERROR: %s", tableName, err.Error())
 		}
 		users = append(users, user)
 	}
 
 	if len(users) == 0 {
-		return users, errors.New("users not found")
+		return nil, errors.New("users not found")
 	}
 
 	return users, nil
@@ -192,14 +213,19 @@ func GetUser(id uint, root bool) (models.User, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("users", models.User{}, 2, false)
+	tableName := "users"
+	query, _, err := commons.GetQuery(tableName, models.User{}, 2, false)
+	if err != nil {
+		return user, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
+
 	query += " WHERE id = $1"
 
 	if !root {
 		query += " AND deleted_at IS NULL"
 	}
 
-	err := db.QueryRow(query, id).Scan(
+	err = db.QueryRow(query, id).Scan(
 		&user.Id,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -226,8 +252,11 @@ func GetUser(id uint, root bool) (models.User, error) {
 		&user.Qualities,
 		&user.Defects,
 		&user.OriginBranchID,
-		&user.BranchID)
-
+		&user.BranchID,
+	)
+	if err != nil {
+		return user, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+	}
 	if user.Id == 0 {
 		return user, errors.New("user not found")
 	}
@@ -244,13 +273,12 @@ func GetAdmins() ([]models.User, error) {
 	tables["users"] = models.User{}
 
 	query := commons.GetMixSelect(tables)
-	log.Println(query)
-
 	query += " WHERE inherit_user_roles_single.role_id = roles_single.id" +
 		" AND inherit_user_roles_single.user_id = users_single.id"
+
 	rows, err := db.Query(query)
 	if err != nil {
-		return []models.User{}, errors.New("admins not found")
+		return nil, fmt.Errorf("can't execute the multiple query ERROR: %s", err.Error())
 	}
 
 	var users []models.User
@@ -302,7 +330,7 @@ func GetAdmins() ([]models.User, error) {
 			&user.BranchID,
 		)
 		if err != nil {
-			return []models.User{}, err
+			return nil, fmt.Errorf("error scanning struct user ERROR: %s", err.Error())
 		}
 
 		role.Id = inheritUserRole.Id
@@ -320,25 +348,27 @@ func GetAdmins() ([]models.User, error) {
 func DeleteUser(id uint, root bool) error {
 	db := database.Connect()
 	defer db.Close()
+	tableName := "users"
 
 	if root {
-		query := "DELETE FROM users WHERE id = $1"
+		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
 		_, err := db.Exec(query, id)
 		return err
 	}
 
-	if commons.IsDeleted("users", id) {
-		return errors.New("user already deleted")
+	if commons.IsDeleted(tableName, id) {
+		return errors.New("already deleted")
 	}
 
-	query := "UPDATE users SET deleted_at = $1 WHERE id = $2"
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = $1 WHERE id = $2", tableName)
 	result, err := db.Exec(query, time.Now(), id)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to delete ERROR: %s", err.Error())
 	}
 
 	if rowsAffected == 0 {
@@ -352,15 +382,16 @@ func UpdateUser(updatingUser *models.User, root bool) error {
 	db := database.Connect()
 	defer db.Close()
 
+	tableName := "users"
 	currentDate := time.Now()
 	updatingUser.UpdatedAt = &currentDate
 	updatingUser.CreatedAt = nil
 	updatingUser.DeletedAt = nil
 
 	if root {
-		query, data, err := commons.GetQuery("users", *updatingUser, 1, true)
+		query, data, err := commons.GetQuery(tableName, *updatingUser, 1, true)
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 		}
 
 		err = db.QueryRow(query, data...).Scan(
@@ -390,19 +421,22 @@ func UpdateUser(updatingUser *models.User, root bool) error {
 			&updatingUser.Qualities,
 			&updatingUser.Defects,
 			&updatingUser.OriginBranchID,
-			&updatingUser.BranchID)
+			&updatingUser.BranchID,
+		)
+		if err != nil {
+			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+		}
 
-		return err
+		return nil
 	}
 
-	if commons.IsDeleted("users", updatingUser.Id) {
+	if commons.IsDeleted(tableName, updatingUser.Id) {
 		return errors.New("user is deleted")
 	}
 
-	query, data, err := commons.GetQuery("users", *updatingUser, 1, true)
-
+	query, data, err := commons.GetQuery(tableName, *updatingUser, 1, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -432,9 +466,14 @@ func UpdateUser(updatingUser *models.User, root bool) error {
 		&updatingUser.Qualities,
 		&updatingUser.Defects,
 		&updatingUser.OriginBranchID,
-		&updatingUser.BranchID)
+		&updatingUser.BranchID,
+	)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+	}
+
+	return nil
 }
 
 //
@@ -443,9 +482,14 @@ func NewInheritUserRole(inheritUserRole *models.InheritUserRole) error {
 	db := database.Connect()
 	defer db.Close()
 
-	query, data, err := commons.GetQuery("inherit_user_roles", *inheritUserRole, 0, true)
+	currentDate := time.Now()
+	inheritUserRole.UpdatedAt = &currentDate
+	inheritUserRole.CreatedAt = &currentDate
+
+	tableName := "inherit_user_roles"
+	query, data, err := commons.GetQuery(tableName, *inheritUserRole, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -454,9 +498,10 @@ func NewInheritUserRole(inheritUserRole *models.InheritUserRole) error {
 		&inheritUserRole.UpdatedAt,
 		&inheritUserRole.DeletedAt,
 		&inheritUserRole.RoleID,
-		&inheritUserRole.UserID)
+		&inheritUserRole.UserID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if inheritUserRole.Id == 0 {
 		return errors.New("can't create inherit user role")
@@ -470,7 +515,11 @@ func GetInheritUserRoles(id uint, root bool) ([]models.Role, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("inherit_user_roles", models.InheritUserRole{}, 2, false)
+	tableName := "inherit_user_roles"
+	query, _, err := commons.GetQuery(tableName, models.InheritUserRole{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -479,7 +528,7 @@ func GetInheritUserRoles(id uint, root bool) ([]models.Role, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 
 	defer rows.Close()
@@ -494,13 +543,12 @@ func GetInheritUserRoles(id uint, root bool) ([]models.Role, error) {
 			&inheritUserRole.RoleID,
 			&inheritUserRole.UserID)
 		if err != nil {
-			return nil, errors.New("can't get inherit user role")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		role, err := GetRole(inheritUserRole.RoleID, root)
-
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("critical role no found to relational table ERROR: %s", err.Error())
 		}
 		userRoles = append(userRoles, role)
 	}
@@ -523,9 +571,14 @@ func NewUserPhone(userPhone *models.UserPhone) error {
 		return errors.New("phone is not a valid input, need just numbers")
 	}
 
-	query, data, err := commons.GetQuery("user_phones", *userPhone, 0, true)
+	currentDate := time.Now()
+	userPhone.UpdatedAt = &currentDate
+	userPhone.CreatedAt = &currentDate
+
+	tableName := "user_phones"
+	query, data, err := commons.GetQuery(tableName, *userPhone, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -535,9 +588,10 @@ func NewUserPhone(userPhone *models.UserPhone) error {
 		&userPhone.DeletedAt,
 		&userPhone.Phone,
 		&userPhone.Main,
-		&userPhone.UserID)
+		&userPhone.UserID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if userPhone.Id == 0 {
 		return errors.New("can't create user phone")
@@ -551,7 +605,11 @@ func GetUserPhones(id uint, root bool) ([]models.UserPhone, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("user_phones", models.UserPhone{}, 2, false)
+	tableName := "user_phones"
+	query, _, err := commons.GetQuery(tableName, models.UserPhone{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -560,7 +618,7 @@ func GetUserPhones(id uint, root bool) ([]models.UserPhone, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -573,9 +631,10 @@ func GetUserPhones(id uint, root bool) ([]models.UserPhone, error) {
 			&userPhone.DeletedAt,
 			&userPhone.Phone,
 			&userPhone.Main,
-			&userPhone.UserID)
+			&userPhone.UserID,
+		)
 		if err != nil {
-			return nil, errors.New("can't get user phone")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		userPhones = append(userPhones, userPhone)
@@ -598,9 +657,14 @@ func NewUserMail(userMail *models.UserMail) error {
 		return errors.New("mail is not a valid input")
 	}
 
-	query, data, err := commons.GetQuery("user_mails", *userMail, 0, true)
+	currentDate := time.Now()
+	userMail.UpdatedAt = &currentDate
+	userMail.CreatedAt = &currentDate
+
+	tableName := "user_mails"
+	query, data, err := commons.GetQuery(tableName, *userMail, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -610,9 +674,10 @@ func NewUserMail(userMail *models.UserMail) error {
 		&userMail.DeletedAt,
 		&userMail.Mail,
 		&userMail.Main,
-		&userMail.UserID)
+		&userMail.UserID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if userMail.Id == 0 {
 		return errors.New("can't create user mail")
@@ -626,7 +691,11 @@ func GetUserMails(id uint, root bool) ([]models.UserMail, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("user_mails", models.UserMail{}, 2, false)
+	tableName := "user_mails"
+	query, _, err := commons.GetQuery(tableName, models.UserMail{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -635,7 +704,7 @@ func GetUserMails(id uint, root bool) ([]models.UserMail, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -650,7 +719,7 @@ func GetUserMails(id uint, root bool) ([]models.UserMail, error) {
 			&userMail.Main,
 			&userMail.UserID)
 		if err != nil {
-			return nil, errors.New("can't get user mail")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		userMails = append(userMails, userMail)
@@ -669,9 +738,14 @@ func NewUserReport(userReport *models.UserReport) error {
 	db := database.Connect()
 	defer db.Close()
 
-	query, data, err := commons.GetQuery("user_reports", *userReport, 0, true)
+	currentDate := time.Now()
+	userReport.UpdatedAt = &currentDate
+	userReport.CreatedAt = &currentDate
+
+	tableName := "user_reports"
+	query, data, err := commons.GetQuery(tableName, *userReport, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -682,7 +756,7 @@ func NewUserReport(userReport *models.UserReport) error {
 		&userReport.Reason,
 		&userReport.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if userReport.Id == 0 {
 		return errors.New("can't create user report")
@@ -696,7 +770,11 @@ func GetUserReports(id uint, root bool) ([]models.UserReport, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("user_reports", models.UserReport{}, 2, false)
+	tableName := "user_reports"
+	query, _, err := commons.GetQuery(tableName, models.UserReport{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -705,7 +783,7 @@ func GetUserReports(id uint, root bool) ([]models.UserReport, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -719,7 +797,7 @@ func GetUserReports(id uint, root bool) ([]models.UserReport, error) {
 			&userReport.Reason,
 			&userReport.UserID)
 		if err != nil {
-			return nil, errors.New("can't get user report")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		userReports = append(userReports, userReport)
@@ -738,9 +816,14 @@ func NewMonetaryBound(monetaryBounds *models.MonetaryBound) error {
 	db := database.Connect()
 	defer db.Close()
 
-	query, data, err := commons.GetQuery("monetary_bounds", *monetaryBounds, 0, true)
+	currentDate := time.Now()
+	monetaryBounds.UpdatedAt = &currentDate
+	monetaryBounds.CreatedAt = &currentDate
+
+	tableName := "monetary_bounds"
+	query, data, err := commons.GetQuery(tableName, *monetaryBounds, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -750,9 +833,10 @@ func NewMonetaryBound(monetaryBounds *models.MonetaryBound) error {
 		&monetaryBounds.DeletedAt,
 		&monetaryBounds.Reason,
 		&monetaryBounds.Bound,
-		&monetaryBounds.UserID)
+		&monetaryBounds.UserID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if monetaryBounds.Id == 0 {
 		return errors.New("can't create monetary bound")
@@ -766,7 +850,11 @@ func GetMonetaryBounds(id uint, root bool) ([]models.MonetaryBound, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("monetary_bounds", models.MonetaryBound{}, 2, false)
+	tableName := "monetary_bounds"
+	query, _, err := commons.GetQuery(tableName, models.MonetaryBound{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -775,7 +863,7 @@ func GetMonetaryBounds(id uint, root bool) ([]models.MonetaryBound, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -790,7 +878,7 @@ func GetMonetaryBounds(id uint, root bool) ([]models.MonetaryBound, error) {
 			&monetaryBound.Bound,
 			&monetaryBound.UserID)
 		if err != nil {
-			return nil, errors.New("can't get monetary bound")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		monetaryBounds = append(monetaryBounds, monetaryBound)
@@ -809,9 +897,14 @@ func NewMonetaryDiscount(monetaryDiscount *models.MonetaryDiscount) error {
 	db := database.Connect()
 	defer db.Close()
 
-	query, data, err := commons.GetQuery("monetary_discounts", *monetaryDiscount, 0, true)
+	currentDate := time.Now()
+	monetaryDiscount.UpdatedAt = &currentDate
+	monetaryDiscount.CreatedAt = &currentDate
+
+	tableName := "monetary_discounts"
+	query, data, err := commons.GetQuery(tableName, *monetaryDiscount, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -821,9 +914,10 @@ func NewMonetaryDiscount(monetaryDiscount *models.MonetaryDiscount) error {
 		&monetaryDiscount.DeletedAt,
 		&monetaryDiscount.Reason,
 		&monetaryDiscount.Discount,
-		&monetaryDiscount.UserID)
+		&monetaryDiscount.UserID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if monetaryDiscount.Id == 0 {
 		return errors.New("can't create monetary discount")
@@ -837,7 +931,11 @@ func GetMonetaryDiscounts(id uint, root bool) ([]models.MonetaryDiscount, error)
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("monetary_discounts", models.MonetaryDiscount{}, 2, false)
+	tableName := "monetary_discounts"
+	query, _, err := commons.GetQuery(tableName, models.MonetaryDiscount{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -846,7 +944,7 @@ func GetMonetaryDiscounts(id uint, root bool) ([]models.MonetaryDiscount, error)
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -859,9 +957,10 @@ func GetMonetaryDiscounts(id uint, root bool) ([]models.MonetaryDiscount, error)
 			&monetaryDiscount.DeletedAt,
 			&monetaryDiscount.Reason,
 			&monetaryDiscount.Discount,
-			&monetaryDiscount.UserID)
+			&monetaryDiscount.UserID,
+		)
 		if err != nil {
-			return nil, errors.New("can't get monetary discount")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		monetaryDiscounts = append(monetaryDiscounts, monetaryDiscount)
@@ -880,9 +979,14 @@ func NewBranchUserRole(branchUserRole *models.BranchUserRole) error {
 	db := database.Connect()
 	defer db.Close()
 
-	query, data, err := commons.GetQuery("branch_user_roles", *branchUserRole, 0, true)
+	currentDate := time.Now()
+	branchUserRole.UpdatedAt = &currentDate
+	branchUserRole.CreatedAt = &currentDate
+
+	tableName := "branch_user_roles"
+	query, data, err := commons.GetQuery(tableName, *branchUserRole, 0, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
 
 	err = db.QueryRow(query, data...).Scan(
@@ -892,9 +996,10 @@ func NewBranchUserRole(branchUserRole *models.BranchUserRole) error {
 		&branchUserRole.DeletedAt,
 		&branchUserRole.BranchID,
 		&branchUserRole.UserID,
-		&branchUserRole.RoleID)
+		&branchUserRole.RoleID,
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	if branchUserRole.Id == 0 {
 		return errors.New("can't create branch user role")
@@ -908,7 +1013,11 @@ func GetBranchUserRoles(id uint, root bool) ([]models.BranchUserRole, error) {
 	db := database.Connect()
 	defer db.Close()
 
-	query, _, _ := commons.GetQuery("branch_user_roles", models.BranchUserRole{}, 2, false)
+	tableName := "branch_user_roles"
+	query, _, err := commons.GetQuery(tableName, models.BranchUserRole{}, 2, false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
 	query += " WHERE user_id = $1"
 
 	if !root {
@@ -917,7 +1026,7 @@ func GetBranchUserRoles(id uint, root bool) ([]models.BranchUserRole, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 	}
 	defer rows.Close()
 
@@ -930,9 +1039,10 @@ func GetBranchUserRoles(id uint, root bool) ([]models.BranchUserRole, error) {
 			&branchUserRole.DeletedAt,
 			&branchUserRole.BranchID,
 			&branchUserRole.UserID,
-			&branchUserRole.RoleID)
+			&branchUserRole.RoleID,
+		)
 		if err != nil {
-			return nil, errors.New("can't get branch user role")
+			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
 		}
 
 		branchUserRoles = append(branchUserRoles, branchUserRole)

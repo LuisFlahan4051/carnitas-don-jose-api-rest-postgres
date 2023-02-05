@@ -58,7 +58,7 @@ func valueIsNull(fieldType reflect.Kind, value reflect.Value) bool {
 	return false
 }
 
-func getValueField(fieldType reflect.Kind, value reflect.Value) interface{} {
+func GetValueField(fieldType reflect.Kind, value reflect.Value) interface{} {
 	switch fieldType {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return value.Int()
@@ -114,7 +114,7 @@ func GetStructFieldsWithoutNull(anyStruct interface{}) ([]string, map[string]int
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
 
-			valueField := getValueField(fieldType, value)
+			valueField := GetValueField(fieldType, value)
 			if valueField != nil {
 				valueFields[fieldName] = valueField
 			}
@@ -149,7 +149,7 @@ func GetStructFields(anyStruct interface{}) ([]string, map[string]interface{}) {
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
 
-			valueField := getValueField(fieldType, value)
+			valueField := GetValueField(fieldType, value)
 			if valueField != nil {
 				valueFields[fieldName] = valueField
 			}
@@ -184,7 +184,7 @@ func GetStructFieldsWithoutSlices(anyStruct interface{}) ([]string, map[string]i
 			jsonTagOptions := strings.Split(jsonTag, ",")
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
-			valueField := getValueField(fieldType, value)
+			valueField := GetValueField(fieldType, value)
 			if valueField != nil {
 				valueFields[fieldName] = valueField
 			}
@@ -340,13 +340,15 @@ func SavePictureAsWebp(file io.Reader, filePath string, fileName string) error {
 	}
 
 	var fileConverted *os.File
-
-	if _, err := os.Stat(filePath + fileName); os.IsNotExist(err) {
+	_, err = os.Stat(filePath + fileName)
+	notExist := os.IsNotExist(err)
+	if notExist {
 		os.MkdirAll(filePath, 0777)
-		fileConverted, err = os.Create(filePath + fileName)
-		if err != nil {
-			return err
-		}
+	}
+
+	fileConverted, err = os.Create(filePath + fileName)
+	if err != nil {
+		return err
 	}
 
 	err = webp.Encode(fileConverted, imageData, nil)
@@ -368,8 +370,8 @@ func FileIsImage(fileName string) bool {
 
 // -------------------------- User Validations -------------------------- //
 
-// validate (request) vars -> ["admin_username", "admin_password", "root"] and returns userID, accessLevel, error
-func Authentication(request *http.Request, maxAccessLevel uint) (uint, uint, error) {
+// validate (request) vars -> ["admin_username", "admin_password", "root"] and returns userID, MaxAccessLevel, error
+func Authentication(request *http.Request, accessLevelRequired uint) (uint, uint, error) {
 	if request.URL.Query().Get("admin_username") == "" || request.URL.Query().Get("admin_password") == "" {
 		return 0, 0, errors.New("need credentials to access this resource")
 	}
@@ -380,7 +382,7 @@ func Authentication(request *http.Request, maxAccessLevel uint) (uint, uint, err
 		return 0, 0, err
 	}
 
-	if accessLevel > maxAccessLevel {
+	if accessLevel > accessLevelRequired {
 		return 0, 0, errors.New("you don't have access to this resource")
 	}
 
@@ -410,11 +412,11 @@ func ValidateUser(input string, password string) (uint, uint, error) {
 		err = errors.New("user does not exist: incorrect email")
 	}
 
-	var bufferId uint
+	var adminBufferId uint
 	var bufferPassword string
 	var bufferVerified bool
 	db := database.Connect()
-	errQuery := db.QueryRow(query, key).Scan(&bufferId, &bufferPassword, &bufferVerified)
+	errQuery := db.QueryRow(query, key).Scan(&adminBufferId, &bufferPassword, &bufferVerified)
 
 	if errQuery != nil {
 		return 0, 0, err
@@ -428,9 +430,9 @@ func ValidateUser(input string, password string) (uint, uint, error) {
 		return 0, 0, errors.New("user is not verified")
 	}
 
-	access_level, errRole := GetUserMaxAccessLevel(bufferId)
+	access_level, errRole := GetUserMaxAccessLevel(adminBufferId)
 
-	return bufferId, access_level, errRole
+	return adminBufferId, access_level, errRole
 }
 
 func GetUserMaxAccessLevel(id uint) (uint, error) {
@@ -460,11 +462,12 @@ func GetUserMaxAccessLevel(id uint) (uint, error) {
 	return access_level, nil
 }
 
-func UserExists(id uint) uint {
+// Returns id when exist, 0 if the user does not exist
+func RegistExists(tableName string, id uint) uint {
 	db := database.Connect()
 	defer db.Close()
 
-	query := "SELECT id FROM users WHERE id = $1"
+	query := fmt.Sprintf("SELECT id FROM %s WHERE id = $1", tableName)
 
 	err := db.QueryRow(query, id).Scan(&id)
 

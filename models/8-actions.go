@@ -25,9 +25,9 @@ type AdminNotification struct {
 	Solved      bool   `json:"solved"`
 	Description string `json:"description"`
 
-	BranchID uint                     `json:"branch_id"`
-	UserID   uint                     `json:"turn_id"`
-	Images   []AdminNotificationImage `json:"images"`
+	BranchID *uint                    `json:"branch_id,omitempty"`
+	UserID   *uint                    `json:"user_id,omitempty"`
+	Images   []AdminNotificationImage `json:"images,omitempty"`
 }
 
 type AdminNotificationImage struct {
@@ -40,7 +40,7 @@ type AdminNotificationImage struct {
 
 type ServerLogs struct {
 	Id          uint      `json:"id"`
-	CreateAt    time.Time `json:"create_at"`
+	CreatedAt   time.Time `json:"created_at"`
 	Transaction string    `json:"transaction"`
 	UserID      uint      `json:"user_id"`
 	BranchID    *uint     `json:"branch_id,omitempty"`

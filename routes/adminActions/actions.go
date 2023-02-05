@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	commons "github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/commonFunctions"
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/crud"
@@ -13,9 +14,135 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func seeNotifications(writer http.ResponseWriter, request *http.Request) {}
+func seeNotifications(writer http.ResponseWriter, request *http.Request) {
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 
-func resolveNotification(writer http.ResponseWriter, request *http.Request) {}
+	var pagination models.Pagination
+	if request.URL.Query().Get("page") != "" {
+		// Getting the page from URL
+		page, err := strconv.Atoi(request.URL.Query().Get("page"))
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, err)
+			return
+		}
+		pagination.Page = &page
+	} else {
+		// Getting data from body
+		err = json.NewDecoder(request.Body).Decode(&pagination)
+
+		if err != nil {
+			// If just enter to the route, it will show the logs of today
+			today := true
+			pagination.Today = &today
+		}
+	}
+
+	notifications, err := crud.GetNotifications(pagination, root)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	for _, notification := range notifications {
+		images, err := crud.GetNotificationImages(notification.Id, root)
+		if err != nil && !strings.Contains(err.Error(), "no images found") {
+			commons.Logcatch(writer, http.StatusInternalServerError, err)
+			return
+		}
+		notification.Images = images
+		notifications = append(notifications, notification)
+	}
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      adminBufferId,
+		Root:        &root,
+		Transaction: "seeNotifications",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(notifications)
+}
+
+func resolveNotification(writer http.ResponseWriter, request *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(request)["notification_id"])
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, errors.New("invalid user/{id} value"))
+		return
+	}
+
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+
+	idExists := commons.RegistExists("notifications", uint(id))
+	if idExists == 0 {
+		commons.Logcatch(writer, http.StatusInternalServerError, errors.New("notification does not exist"))
+		return
+	}
+
+	notificationToUpdate := models.AdminNotification{
+		ID: models.ID{
+			Id: uint(id),
+		},
+		Solved: true,
+	}
+
+	err = crud.UpdateNotification(&notificationToUpdate, root)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      adminBufferId,
+		Root:        &root,
+		Transaction: "resolveNotification",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(notificationToUpdate)
+}
+
+func dropNotifications(writer http.ResponseWriter, request *http.Request) {
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+
+	err = crud.DeleteNotifications()
+	if err != nil {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = os.RemoveAll("./storage/public/notifications")
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      adminBufferId,
+		Root:        &root,
+		Transaction: "dropNotifications",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode("notifications deleted")
+}
 
 //
 
@@ -98,7 +225,7 @@ func depositMoneyToSafebox(writer http.ResponseWriter, request *http.Request) {}
 //
 
 func seeUsers(writer http.ResponseWriter, request *http.Request) {
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -112,7 +239,7 @@ func seeUsers(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "seeUsers",
 	})
@@ -129,7 +256,7 @@ func seeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -143,7 +270,7 @@ func seeUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "seeUser",
 	})
@@ -160,7 +287,7 @@ func dropUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -182,7 +309,7 @@ func dropUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "dropUser",
 	})
@@ -197,7 +324,7 @@ func changeUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -244,7 +371,7 @@ func changeUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "UpdateUser",
 	})

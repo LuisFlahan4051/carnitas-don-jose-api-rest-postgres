@@ -42,7 +42,7 @@ func SetSupervisorHandleActions(router *mux.Router, URLs *[]string) {
 
 	//
 
-	route = "notification"
+	route = "/notification"
 	router.HandleFunc(route, sendNotification).Methods("POST")
 	*URLs = append(*URLs, route)
 

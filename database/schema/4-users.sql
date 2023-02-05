@@ -110,8 +110,8 @@ CREATE TABLE monetary_bounds(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT NOT NULL,
-    bound REAL NOT NULL,
+    reason TEXT,
+    bound REAL,
 
     user_id INT,
     PRIMARY KEY (id),
@@ -124,8 +124,8 @@ CREATE TABLE monetary_discounts(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT NOT NULL,
-    discount REAL NOT NULL,
+    reason TEXT,
+    discount REAL,
 
     user_id INT,
     PRIMARY KEY (id),

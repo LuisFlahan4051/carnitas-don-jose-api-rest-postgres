@@ -4,7 +4,7 @@ CREATE TABLE safebox_actions(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    withdrawal BOOLEAN,
+    withdrawal BOOLEAN DEFAULT false,
 
     user_id INT NOT NULL,
     PRIMARY KEY (id)
@@ -29,11 +29,11 @@ CREATE TABLE notifications(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    type TEXT, /* INFO/WARNING/ERROR/DONE/URGENT */
-    solved BOOLEAN,
-    description TEXT,
+    type TEXT NOT NULL, /* INFO/WARNING/ERROR/DONE/URGENT */
+    solved BOOLEAN DEFAULT false,
+    description TEXT NOT NULL,
 
-    branch_id INT NOT NULL,
+    branch_id INT,
     user_id INT,
     PRIMARY KEY (id),
     FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -46,7 +46,7 @@ CREATE TABLE notification_images(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    image TEXT,
+    image TEXT NOT NULL,
 
     notification_id INT NOT NULL,
     PRIMARY KEY (id),

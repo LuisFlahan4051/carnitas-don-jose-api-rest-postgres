@@ -19,15 +19,15 @@ import (
 func seeBranch(writer http.ResponseWriter, request *http.Request) {}
 
 func registNewUser(writer http.ResponseWriter, request *http.Request) {
-	bufferId, _, err := commons.Authentication(request, commons.SUPERVISOR)
-	root := false
+	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.SUPERVISOR)
+	root := maxAccessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
 	}
 
 	//Need Content-Type: multipart/form-data sending by inputs of a form, Max 33MB
-	err = request.ParseMultipartForm(32 << 20)
+	err = request.ParseMultipartForm(32 << 20) // 32<<20 = 32 * 2^20 = 33,554,432 bits = 32.768 MB
 	if err != nil {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
 		return
@@ -54,7 +54,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		_ = schema.NewDecoder().Decode(&user, request.Form)
+		schema.NewDecoder().Decode(&user, request.Form)
 
 		err = crud.NewUser(&user)
 		if err != nil {
@@ -62,7 +62,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		user.Id = commons.UserExists(user.Id)
+		user.Id = commons.RegistExists("users", user.Id)
 		if user.Id == 0 {
 			commons.Logcatch(writer, http.StatusBadRequest, errors.New("user do not created"))
 			return
@@ -89,7 +89,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		}
 
 		crud.NewServerActionLog(models.ServerLogs{
-			UserID:      bufferId,
+			UserID:      adminBufferId,
 			Root:        &root,
 			Transaction: "registNewUser",
 		})
@@ -99,7 +99,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_ = schema.NewDecoder().Decode(&user, request.Form)
+	schema.NewDecoder().Decode(&user, request.Form)
 
 	err = crud.NewUser(&user)
 	if err != nil {
@@ -108,7 +108,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "registNewUser",
 	})
@@ -139,7 +139,74 @@ func changeUserRoleAtBranch(writer http.ResponseWriter, request *http.Request) {
 
 //
 
-func sendNotification(writer http.ResponseWriter, request *http.Request) {}
+func sendNotification(writer http.ResponseWriter, request *http.Request) {
+	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.SUPERVISOR)
+	root := maxAccessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+
+	//Need Content-Type: multipart/form-data sending by inputs of a form, Max 33MB
+	err = request.ParseMultipartForm(32 << 20) // 32<<20 = 32 * 2^20 = 33,554,432 bits = 32.768 MB
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	var notification models.AdminNotification
+	schema.NewDecoder().Decode(&notification, request.Form)
+
+	err = crud.NewNotification(&notification)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	form := request.MultipartForm
+	files := form.File["images"]
+	for iterator, file := range files {
+
+		if !commons.FileIsImage(file.Filename) {
+			commons.Logcatch(writer, http.StatusBadRequest, errors.New("file type not supported, only .jpg, .jpeg and .png are allowed"))
+			return
+		}
+
+		fileBuffer, err := file.Open()
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, err)
+		}
+		defer fileBuffer.Close()
+
+		newFileName := fmt.Sprintf("%d.webp", iterator)
+		localPathStorage := fmt.Sprintf("./storage/public/notifications/%d/images/", notification.Id)
+
+		err = commons.SavePictureAsWebp(fileBuffer, localPathStorage, newFileName)
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, errors.New("cant create file "+err.Error()))
+			return
+		}
+
+		pathStorage := fmt.Sprintf("%s://%s:%s/notifications/%d/images/%s", os.Getenv("HTTP"), os.Getenv("SERVERHOST"), os.Getenv("SERVERPORT"), notification.Id, newFileName)
+
+		image := models.AdminNotificationImage{
+			Image:          pathStorage,
+			NotificationID: notification.Id,
+		}
+
+		notification.Images = append(notification.Images, image)
+	}
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      adminBufferId,
+		Root:        &root,
+		Transaction: "sendNotification",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusCreated)
+	json.NewEncoder(writer).Encode(notification)
+}
 
 //
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	commons "github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/commonFunctions"
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/crud"
@@ -19,7 +20,7 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -33,7 +34,7 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	inheritUserRoles, err := crud.GetInheritUserRoles(user.Id, root)
-	if err != nil && err.Error() != "user doesn't have roles" {
+	if err != nil && !strings.Contains(err.Error(), "user doesn't have roles") {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
 	}
@@ -65,7 +66,7 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 	user.InheritUserRoles = append(user.InheritUserRoles, role)
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "makeUserRoot",
 	})
@@ -82,7 +83,7 @@ func verifyUser(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -103,7 +104,7 @@ func verifyUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "verifyUser",
 	})
@@ -133,11 +134,17 @@ func seeSeverLogs(writer http.ResponseWriter, request *http.Request) {
 		// Getting data from body
 		err = json.NewDecoder(request.Body).Decode(&pagination)
 
+		// If just enter to the route, it will show the logs of today
 		if err != nil {
-			// If just enter to the route, it will show the logs of today
-			today := true
-			pagination.Today = &today
+			if err.Error() == "EOF" {
+				today := true
+				pagination.Today = &today
+			} else {
+				commons.Logcatch(writer, http.StatusBadRequest, err)
+				return
+			}
 		}
+
 	}
 
 	logs, err := crud.GetLogs(pagination)
@@ -152,7 +159,7 @@ func seeSeverLogs(writer http.ResponseWriter, request *http.Request) {
 }
 
 func cleanServerLogs(writer http.ResponseWriter, request *http.Request) {
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -170,7 +177,7 @@ func cleanServerLogs(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "cleanServerLogs",
 	})
@@ -181,7 +188,7 @@ func cleanServerLogs(writer http.ResponseWriter, request *http.Request) {
 }
 
 func seeAdmins(writer http.ResponseWriter, request *http.Request) {
-	bufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
@@ -199,7 +206,7 @@ func seeAdmins(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      bufferId,
+		UserID:      adminBufferId,
 		Root:        &root,
 		Transaction: "seeAdmins",
 	})

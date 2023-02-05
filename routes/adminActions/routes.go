@@ -8,8 +8,12 @@ func SetAdminHandleActions(router *mux.Router, URLs *[]string) {
 	router.HandleFunc(route, seeNotifications).Methods("GET")
 	*URLs = append(*URLs, route)
 
-	route = "/notification/{notification_id}"
-	router.HandleFunc(route, resolveNotification).Methods("PATCH")
+	route = "/notifications"
+	router.HandleFunc(route, dropNotifications).Methods("DELETE")
+	*URLs = append(*URLs, route)
+
+	route = "/notification/{notification_id}/solve"
+	router.HandleFunc(route, resolveNotification).Methods("POST")
 	*URLs = append(*URLs, route)
 
 	//
