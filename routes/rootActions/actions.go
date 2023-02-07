@@ -33,8 +33,8 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	inheritUserRoles, err := crud.GetInheritUserRoles(user.Id, root)
-	if err != nil && !strings.Contains(err.Error(), "user doesn't have roles") {
+	inheritUserRoles, err := crud.GetInheritUserRolesTODO(user.Id, root)
+	if err != nil && !strings.Contains(err.Error(), "inherit_user_roles not found") {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
 	}

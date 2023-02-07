@@ -235,13 +235,13 @@ func getDataFields(fieldsSlice []string, fieldsValuesMap map[string]interface{})
 	return data
 }
 
-// OPERATION: CREATE=0; UPDATE=1; SELECT=2; | RETURNS query string, data interface and error
-func GetQuery(table string, strc interface{}, operation uint, returning bool) (string, []interface{}, error) {
+// OPERATION: "INSERT", "UPDATE", "SELECT"; | RETURNS query string, data interface and error
+func GetQuery(table string, strc interface{}, operation string, returning bool) (string, []interface{}, error) {
 	var query string
 	var data []interface{}
 
 	switch operation {
-	case 0:
+	case "INSERT":
 		fieldsSlice, fieldsValuesMap := GetStructFieldsWithoutNull(strc)
 		fields := strings.Join(fieldsSlice, ", ")
 
@@ -256,7 +256,7 @@ func GetQuery(table string, strc interface{}, operation uint, returning bool) (s
 		}
 
 		data = getDataFields(fieldsSlice, fieldsValuesMap)
-	case 1:
+	case "UPDATE":
 		fieldsSlice, fieldsValuesMap := GetStructFieldsWithoutNull(strc)
 
 		FieldsWithIndex := getIndexAndFieldsFormated(fieldsSlice)
@@ -270,7 +270,7 @@ func GetQuery(table string, strc interface{}, operation uint, returning bool) (s
 			query += " RETURNING " + allFields
 		}
 
-	case 2:
+	case "SELECT":
 		fieldsSlice, _ := GetStructFieldsWithoutSlices(strc)
 		fields := strings.Join(fieldsSlice, ", ")
 

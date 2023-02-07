@@ -3,6 +3,7 @@ package supervisorActions
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"errors"
@@ -150,8 +151,6 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	//TODO: cant receive type field, something wrong with the decoder
-
 	//Need Content-Type: multipart/form-data sending by inputs of a form, Max 33MB
 	err = request.ParseMultipartForm(32 << 20) // 32<<20 = 32 * 2^20 = 33,554,432 bits = 32.768 MB
 	if err != nil && !strings.Contains(err.Error(), "EOF") {
@@ -162,7 +161,8 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 	var notification models.AdminNotification
 	decoderFormFields := schema.NewDecoder()
 	decoderFormFields.SetAliasTag("json")
-	decoderFormFields.Decode(&notification, request.Form)
+	err = decoderFormFields.Decode(&notification, request.Form)
+	log.Println(err)
 
 	err = crud.NewNotification(&notification)
 	if err != nil {

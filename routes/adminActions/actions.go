@@ -22,6 +22,8 @@ func seeNotifications(writer http.ResponseWriter, request *http.Request) {
 	}
 	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 
+	solved := request.URL.Query().Get("solved")
+
 	var pagination models.Pagination
 	if request.URL.Query().Get("page") != "" {
 		// Getting the page from URL
@@ -47,7 +49,7 @@ func seeNotifications(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	notifications, err := crud.GetNotifications(pagination, root)
+	notifications, err := crud.GetNotifications(pagination, solved, root)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
@@ -130,10 +132,12 @@ func dropNotifications(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err = os.RemoveAll("./storage/public/notifications")
-	if err != nil {
-		commons.Logcatch(writer, http.StatusBadRequest, err)
-		return
+	if root {
+		err = os.RemoveAll("./storage/public/notifications")
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, err)
+			return
+		}
 	}
 
 	crud.NewServerActionLog(models.ServerLogs{

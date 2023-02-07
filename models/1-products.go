@@ -14,7 +14,7 @@ type ID struct {
 type FoodType struct {
 	ID
 
-	Name string `gorm:"type:varchar(50)" json:"name"`
+	Name string `json:"name"`
 
 	Foods []Food `json:"foods"`
 }
@@ -22,16 +22,16 @@ type FoodType struct {
 type FoodMeat struct {
 	ID
 
-	Name  string `gorm:"type:varchar(50)" json:"name"`
+	Name  string `json:"name"`
 	Foods []Food `json:"foods"`
 }
 
 type Food struct {
 	ID
 
-	Name        string `gorm:"type:varchar(50)" json:"name"`
-	Description string `json:"description"`
-	Photo       string `json:"photo"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Photo       *string `json:"photo"`
 
 	FoodTypeID uint `json:"food_type_id"`
 	FoodMeatID uint `json:"food_meat_id"`
@@ -42,7 +42,7 @@ type Food struct {
 type DrinkSize struct {
 	ID
 
-	Name string `gorm:"type:varchar(50)" json:"name"`
+	Name string `json:"name"`
 
 	Drinks []Drink `json:"drinks"`
 }
@@ -50,14 +50,14 @@ type DrinkSize struct {
 type DrinkFlavor struct {
 	ID
 
-	Name   string  `gorm:"type:varchar(50)" json:"name"`
+	Name   string  `json:"name"`
 	Drinks []Drink `json:"drinks"`
 }
 
 type Drink struct {
 	ID
 
-	Name        string `gorm:"type:varchar(50)" json:"name"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 	Photo       string `json:"photo"`
 
@@ -69,10 +69,10 @@ type Drink struct {
 
 type Product struct {
 	ID
-	Name        string  `gorm:"type:varchar(50)" json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `gorm:"check: price >= 0" json:"price"`
-	Photo       string  `json:"photo"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Price       float64 `json:"price"`
+	Photo       *string `json:"photo"`
 
 	ProductFoods           []ProductFood           `json:"product_foods"`
 	ProductDrinks          []ProductDrink          `json:"product_drinks"`
@@ -84,8 +84,8 @@ type Product struct {
 type ProductFood struct {
 	ID
 
-	UnitQuantity     uint `gorm:"check: unit_quantity >= 0; default: 0" json:"unit_quantity"`
-	GrammageQuantity uint `gorm:"check: grammage_quantity >= 0; default: 0" json:"grammage_quantity"`
+	UnitQuantity     uint `json:"unit_quantity"`
+	GrammageQuantity uint `json:"grammage_quantity"`
 
 	FoodID    uint `json:"food_id"`
 	ProductID uint `json:"product_id"`
@@ -94,8 +94,8 @@ type ProductFood struct {
 type ProductDrink struct {
 	ID
 
-	UnitQuantity     uint `gorm:"check: unit_quantity >= 0; default: 0" json:"unit_quantity"`
-	GrammageQuantity uint `gorm:"check: grammage_quantity >= 0; default: 0" json:"grammage_quantity"`
+	UnitQuantity     uint `json:"unit_quantity"`
+	GrammageQuantity uint `json:"grammage_quantity"`
 
 	DrinkID   uint `json:"drink_id"`
 	ProductID uint `json:"product_id"`

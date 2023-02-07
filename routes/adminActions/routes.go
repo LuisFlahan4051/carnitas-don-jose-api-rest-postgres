@@ -4,6 +4,7 @@ import "github.com/gorilla/mux"
 
 func SetAdminHandleActions(router *mux.Router, URLs *[]string) {
 
+	//var ?solved=true default value is false. It will display only the solver or unsolved notifications
 	route := "/notifications"
 	router.HandleFunc(route, seeNotifications).Methods("GET")
 	*URLs = append(*URLs, route)

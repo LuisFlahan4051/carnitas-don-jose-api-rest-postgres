@@ -19,7 +19,7 @@ func GetLogs(pagination models.Pagination) ([]models.ServerLogs, error) {
 	defer db.Close()
 
 	tableName := "server_logs"
-	query, _, err := commons.GetQuery(tableName, models.ServerLogs{}, 2, false)
+	query, _, err := commons.GetQuery(tableName, models.ServerLogs{}, "SELECT", false)
 	if err != nil {
 		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -107,7 +107,7 @@ func NewServerActionLog(serverLog models.ServerLogs) {
 	serverLog.CreatedAt = currentDate
 
 	tableName := "server_logs"
-	query, data, err := commons.GetQuery(tableName, serverLog, 0, false)
+	query, data, err := commons.GetQuery(tableName, serverLog, "INSERT", false)
 	if err != nil {
 		log.Printf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -145,7 +145,7 @@ func NewNotification(notification *models.AdminNotification) error {
 	notification.CreatedAt = &currentDate
 
 	tableName := "notifications"
-	query, data, err := commons.GetQuery(tableName, *notification, 0, true)
+	query, data, err := commons.GetQuery(tableName, *notification, "INSERT", true)
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -173,12 +173,12 @@ func NewNotification(notification *models.AdminNotification) error {
 	return nil
 }
 
-func GetNotifications(pagination models.Pagination, root bool) ([]models.AdminNotification, error) {
+func GetNotifications(pagination models.Pagination, solved string, root bool) ([]models.AdminNotification, error) {
 	db := database.Connect()
 	defer db.Close()
 
 	tableName := "notifications"
-	query, _, err := commons.GetQuery(tableName, models.AdminNotification{}, 2, false)
+	query, _, err := commons.GetQuery(tableName, models.AdminNotification{}, "SELECT", false)
 	if err != nil {
 		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -225,8 +225,17 @@ func GetNotifications(pagination models.Pagination, root bool) ([]models.AdminNo
 		if !root {
 			deleteNull = "WHERE deleted_at IS NULL"
 		}
+		var solvedQuery string
+		switch solved {
+		case "true":
+			solvedQuery = "AND solved = 'true'"
+		case "false":
+			solvedQuery = "AND solved = 'false'"
+		default:
+			solvedQuery = ""
+		}
 
-		query += fmt.Sprintf(" %s ORDER BY created_at DESC LIMIT 30 OFFSET %d", deleteNull, (*pagination.Page-1)*30) // if wrong try ORDER BY id DESC
+		query += fmt.Sprintf(" %s %s ORDER BY created_at DESC LIMIT 30 OFFSET %d", deleteNull, solvedQuery, (*pagination.Page-1)*30) // if wrong try ORDER BY id DESC
 	} else {
 		sinceSplit := strings.Split(pagination.Since.String(), " ")
 		since := fmt.Sprintf("%s %s", sinceSplit[0], sinceSplit[1])
@@ -238,7 +247,17 @@ func GetNotifications(pagination models.Pagination, root bool) ([]models.AdminNo
 			deleteNull = "deleted_at IS NULL AND"
 		}
 
-		query += fmt.Sprintf(" WHERE %s created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", deleteNull, since, to)
+		var solvedQuery string
+		switch solved {
+		case "true":
+			solvedQuery = "solved = 'true' AND"
+		case "false":
+			solvedQuery = "solved = 'false' AND"
+		default:
+			solvedQuery = ""
+		}
+
+		query += fmt.Sprintf(" WHERE %s %s created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", deleteNull, solvedQuery, since, to)
 
 	}
 
@@ -283,7 +302,7 @@ func GetNotification(id uint, root bool) (models.AdminNotification, error) {
 	defer db.Close()
 
 	tableName := "notifications"
-	query, _, err := commons.GetQuery(tableName, models.AdminNotification{}, 2, false)
+	query, _, err := commons.GetQuery(tableName, models.AdminNotification{}, "SELECT", false)
 	if err != nil {
 		return models.AdminNotification{}, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -321,44 +340,21 @@ func UpdateNotification(notification *models.AdminNotification, root bool) error
 	defer db.Close()
 
 	tableName := "notifications"
-
 	currentDate := time.Now()
-	notification.UpdatedAt = &currentDate
-	notification.CreatedAt = nil
-	notification.DeletedAt = nil
 
-	//TODO: Reduce the code with commons.IsDeleted and !root. Do this with all the crud
-	if root {
-		query, data, err := commons.GetQuery(tableName, *notification, 1, true)
-		if err != nil {
-			return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
-		}
-
-		err = db.QueryRow(query, data...).Scan(
-			&notification.Id,
-			&notification.CreatedAt,
-			&notification.UpdatedAt,
-			&notification.DeletedAt,
-			&notification.Type,
-			&notification.Solved,
-			&notification.Description,
-			&notification.BranchID,
-			&notification.UserID,
-		)
-
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-
-		return nil
+	if !root {
+		notification.UpdatedAt = &currentDate
+		notification.CreatedAt = nil // Not allowed to update this field
+		notification.DeletedAt = nil // Not allowed to update this field
 	}
 
-	if commons.IsDeleted(tableName, notification.Id) {
+	if commons.IsDeleted(tableName, notification.Id) && !root {
 		return errors.New("notification is deleted")
 	}
 
-	query, data, err := commons.GetQuery(tableName, *notification, 1, true)
-
+	query, data, err := commons.GetQuery(tableName, *notification, "UPDATE", true)
+	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
+	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -377,6 +373,10 @@ func UpdateNotification(notification *models.AdminNotification, root bool) error
 
 	if err != nil {
 		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+	}
+
+	if notification.Id == 0 {
+		return errors.New("notification doesn't exist")
 	}
 
 	return nil
@@ -405,7 +405,7 @@ func NewNotificationImage(notificationImage *models.AdminNotificationImage) erro
 	notificationImage.CreatedAt = &currentDate
 
 	tableName := "notification_images"
-	query, data, err := commons.GetQuery(tableName, *notificationImage, 0, true)
+	query, data, err := commons.GetQuery(tableName, *notificationImage, "INSERT", true)
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -435,7 +435,7 @@ func GetNotificationImages(id uint, root bool) ([]models.AdminNotificationImage,
 	defer db.Close()
 
 	tableName := "notification_images"
-	query, _, err := commons.GetQuery(tableName, models.AdminNotificationImage{}, 2, false)
+	query, _, err := commons.GetQuery(tableName, models.AdminNotificationImage{}, "SELECT", false)
 	if err != nil {
 		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
