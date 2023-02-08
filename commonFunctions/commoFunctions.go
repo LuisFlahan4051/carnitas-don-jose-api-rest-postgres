@@ -326,6 +326,41 @@ func IsDeleted(table string, id uint) bool {
 	return deletedAt != nil
 }
 
+func DeleteFromTableById(tableName string, id uint, root bool) error {
+	db := database.Connect()
+	defer db.Close()
+
+	if root {
+		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
+		_, err := db.Exec(query, id)
+		if err != nil {
+			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+		}
+		return nil
+	}
+
+	if IsDeleted(tableName, id) {
+		return errors.New("already deleted")
+	}
+
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
+	result, err := db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("%s not found", tableName)
+	}
+
+	return nil
+}
+
 // ------------------------ Manipulate Images ------------------------ //
 
 func SavePictureAsWebp(file io.Reader, filePath string, fileName string) error {

@@ -5,7 +5,7 @@ CREATE TABLE sales(
     deleted_at TIMESTAMP DEFAULT NULL,
 
 
-    entry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    entry_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     exit_date TIMESTAMP,
     table_number INT,
     packed BOOLEAN DEFAULT FALSE,
@@ -27,7 +27,7 @@ CREATE TABLE sale_products(
     deleted_at TIMESTAMP DEFAULT NULL,
 
 
-    done BOOLEAN DEFAULT false,
+    done BOOLEAN NOT NULL DEFAULT false,
     grammage_quantity REAL CHECK (grammage_quantity >= 0),
     kilogrammage_price REAL CHECK (kilogrammage_price >= 0),
     unit_quantity INT CHECK (unit_quantity >= 0),

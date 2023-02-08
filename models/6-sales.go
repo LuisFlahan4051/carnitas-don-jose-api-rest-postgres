@@ -7,10 +7,10 @@ import (
 type Sale struct {
 	ID
 
-	EntryDate   time.Time `json:"entry_date"`
-	ExitDate    time.Time `json:"exit_date"`
-	TableNumber uint      `json:"table_number"`
-	Packed      bool      `json:"packed"`
+	EntryDate   time.Time  `json:"entry_date"`
+	ExitDate    *time.Time `json:"exit_date"`
+	TableNumber *uint      `json:"table_number"`
+	Packed      *bool      `json:"packed"`
 
 	UserID         uint           `json:"user_id"`
 	BranchID       uint           `json:"branch_id"`
@@ -24,13 +24,13 @@ type Sale struct {
 type SaleProduct struct {
 	ID
 
-	Done              bool    `gorm:"default: false" json:"done"`
-	GrammageQuantity  uint    `gorm:"check: grammage_quantity >= 0; default: 0" json:"grammage_quantity"`
-	KilogrammagePrice float64 `gorm:"check: kilogrammage_price >= 0; default: 0" json:"kilogrammage_price"`
-	UnitQuantity      uint    `gorm:"check: unit_quantity >= 0; default: 0" json:"unit_quantity"`
-	UnitPrice         float64 `gorm:"check: unit_price >= 0; default: 0" json:"unit_price"`
-	Discount          float64 `gorm:"check: discount >= 0; default: 0" json:"discount"`
-	Tax               float64 `gorm:"check: tax >= 0; default: 0" json:"tax"`
+	Done              bool     `json:"done"`
+	GrammageQuantity  *uint    `json:"grammage_quantity"`
+	KilogrammagePrice *float64 `json:"kilogrammage_price"`
+	UnitQuantity      *uint    `json:"unit_quantity"`
+	UnitPrice         *float64 `json:"unit_price"`
+	Discount          *float64 `json:"discount"`
+	Tax               *float64 `json:"tax"`
 
 	SaleID    uint `json:"sale_id"`
 	ProductID uint `json:"product_id"`

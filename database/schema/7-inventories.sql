@@ -4,7 +4,7 @@ CREATE TABLE inventory_types(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    inventory_type TEXT NOT NULL,
+    type TEXT NOT NULL,
 
     PRIMARY KEY (id)
 );
@@ -15,7 +15,7 @@ CREATE TABLE inventories(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    acepted BOOLEAN,
+    acepted BOOLEAN DEFAULT false,
 
     inventory_type_id INT NOT NULL, /* INIT/FINAL/LOSSES */
     turn_id INT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE inventory_products_stock(
 
     unit_quantity INT NOT NULL CHECK (unit_quantity >= 0) DEFAULT 0,
     grammage_quantity INT NOT NULL CHECK (grammage_quantity >= 0) DEFAULT 0,
-    in_use BOOLEAN,
+    in_use BOOLEAN DEFAULT false,
 
     inventory_id INT NOT NULL,
     product_id INT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE inventory_supplies_stock(
 
     unit_quantity INT NOT NULL CHECK (unit_quantity >= 0) DEFAULT 0,
     grammage_quantity INT NOT NULL CHECK (grammage_quantity >= 0) DEFAULT 0,
-    in_use BOOLEAN,
+    in_use BOOLEAN DEFAULT false,
 
     inventory_id INT NOT NULL,
     supply_id INT NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE inventory_articles_stock(
 
     unit_quantity INT NOT NULL CHECK (unit_quantity >= 0),
     grammage_quantity INT NOT NULL CHECK (grammage_quantity >= 0) DEFAULT 0,
-    in_use BOOLEAN,
+    in_use BOOLEAN DEFAULT false,
 
     inventory_id INT NOT NULL,
     article_id INT NOT NULL,

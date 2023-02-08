@@ -39,9 +39,14 @@ func main() {
 		http.StripPrefix(prefix, http.FileServer(http.Dir("./client/testUploadFile"))),
 	)
 
-	publicUserFilesDir := "/users/"
-	router.PathPrefix(publicUserFilesDir).Handler(
-		http.StripPrefix(publicUserFilesDir, http.FileServer(http.Dir("./storage/public/users"))),
+	publicUsersFilesDir := "/users/"
+	router.PathPrefix(publicUsersFilesDir).Handler(
+		http.StripPrefix(publicUsersFilesDir, http.FileServer(http.Dir("./storage/public/users"))),
+	)
+
+	publicNotificationsFilesDir := "/notifications/"
+	router.PathPrefix(publicNotificationsFilesDir).Handler(
+		http.StripPrefix(publicNotificationsFilesDir, http.FileServer(http.Dir("./storage/public/notifications"))),
 	)
 
 	// RUN SERVER

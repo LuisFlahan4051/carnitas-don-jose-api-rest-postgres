@@ -124,39 +124,7 @@ func GetRole(id uint, root bool) (models.Role, error) {
 }
 
 func DeleteRole(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "roles"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("roles", id, root)
 }
 
 func UpdateRole(updatingRole *models.Role, root bool) error {
@@ -471,39 +439,7 @@ func GetAdmins() ([]models.User, error) {
 }
 
 func DeleteUser(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-	tableName := "users"
-
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = $1 WHERE id = $2", tableName)
-	result, err := db.Exec(query, time.Now(), id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("users", id, root)
 }
 
 func UpdateUser(updatingUser *models.User, root bool) error {
@@ -685,39 +621,7 @@ func GetInheritUserRole(id uint, root bool) (models.InheritUserRole, error) {
 }
 
 func DeleteInheritUserRole(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "inherit_user_roles"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("inherit_user_roles", id, root)
 }
 
 func UpdateInheritUserRole(updatingInheritUserRole *models.InheritUserRole, root bool) error {
@@ -940,39 +844,7 @@ func GetUserPhone(id uint, root bool) (models.UserPhone, error) {
 }
 
 func DeleteUserPhone(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "user_phones"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("user_phones", id, root)
 }
 
 func UpdateUserPhone(updatingUserPhone *models.UserPhone, root bool) error {
@@ -1141,39 +1013,7 @@ func GetUserMail(id uint, root bool) (models.UserMail, error) {
 }
 
 func DeleteUserMail(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "user_mails"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("user_mails", id, root)
 }
 
 func UpdateUserMail(updatingUserMail *models.UserMail, root bool) error {
@@ -1334,39 +1174,7 @@ func GetUserReport(id uint, root bool) (models.UserReport, error) {
 }
 
 func DeleteUserReport(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "user_reports"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("user_reports", id, root)
 }
 
 func UpdateUserReport(updatingUserReport *models.UserReport, root bool) error {
@@ -1529,39 +1337,7 @@ func GetMonetaryBound(id uint, root bool) (models.MonetaryBound, error) {
 }
 
 func DeleteMonetaryBound(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "monetary_bounds"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("monetary_bounds", id, root)
 }
 
 func UpdateMonetaryBound(updatingMonetaryBound *models.MonetaryBound, root bool) error {
@@ -1726,39 +1502,7 @@ func GetMonetaryDiscount(id uint, root bool) (models.MonetaryDiscount, error) {
 }
 
 func DeleteMonetaryDiscount(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "monetary_discounts"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("monetary_discounts", id, root)
 }
 
 func UpdateMonetaryDiscount(updatingMonetaryDiscount *models.MonetaryDiscount, root bool) error {
@@ -1923,39 +1667,7 @@ func GetBranchUserRole(id uint, root bool) (models.BranchUserRole, error) {
 }
 
 func DeleteBranchUserRole(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branch_user_roles"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branch_user_roles", id, root)
 }
 
 func UpdateBranchUserRole(updatingBranchUserRole *models.BranchUserRole, root bool) error {

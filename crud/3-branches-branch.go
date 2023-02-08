@@ -124,39 +124,7 @@ func GetBranch(id uint, root bool) (models.Branch, error) {
 }
 
 func DeleteBranch(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branches"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branches", id, root)
 }
 
 func UpdateBranch(updatingBranch *models.Branch, root bool) error {
@@ -326,39 +294,7 @@ func GetBranchSafebox(id uint, root bool) (models.BranchSafebox, error) {
 }
 
 func DeleteBranchSafebox(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branch_safeboxes"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branch_safeboxes", id, root)
 }
 
 func UpdateBranchSafebox(updatingBranchSafebox *models.BranchSafebox, root bool) error {
@@ -530,39 +466,7 @@ func GetBranchProductStock(id uint, root bool) (models.BranchProductStock, error
 }
 
 func DeleteBranchProductStock(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branch_products_stock"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branch_products_stock", id, root)
 }
 
 func UpdateBranchProductStock(updatingBranchProductStock *models.BranchProductStock, root bool) error {
@@ -735,39 +639,7 @@ func GetBranchSupplyStock(id uint, root bool) (models.BranchSupplyStock, error) 
 }
 
 func DeleteBranchSupplyStock(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branch_supplies_stock"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branch_supplies_stock", id, root)
 }
 
 func UpdateBranchSupplyStock(updatingBranchSupplyStock *models.BranchSupplyStock, root bool) error {
@@ -940,39 +812,7 @@ func GetBranchArticleStock(id uint, root bool) (models.BranchArticleStock, error
 }
 
 func DeleteBranchArticleStock(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "branch_articles_stock"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("branch_articles_stock", id, root)
 }
 
 func UpdateBranchArticleStock(updatingBranchArticleStock *models.BranchArticleStock, root bool) error {

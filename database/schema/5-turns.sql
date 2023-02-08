@@ -6,11 +6,11 @@ CREATE TABLE turns (
 
     start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     end_date TIMESTAMP,
-    active BOOLEAN,
+    active BOOLEAN DEFAULT true,
 
-    incomes_counter REAL,
-	netincomes_counter REAL,
-	expenses_counter REAL,
+    incomes_counter REAL NOT NULL CHECK (incomes_counter >= 0) DEFAULT 0,
+	netincomes_counter REAL NOT NULL CHECK (netincomes_counter >= 0) DEFAULT 0,
+	expenses_counter REAL NOT NULL CHECK (expenses_counter >= 0) DEFAULT 0,
 
     user_id INT NOT NULL,
     branch_id INT NOT NULL,
@@ -25,8 +25,8 @@ CREATE TABLE turn_user_roles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    login_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    logout_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    login_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    logout_date TIMESTAMP DEFAULT NULL,
 
     user_id INT NOT NULL,
     turn_id INT NOT NULL,

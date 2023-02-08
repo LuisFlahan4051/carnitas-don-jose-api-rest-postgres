@@ -7,8 +7,8 @@ type Supply struct {
 	Description string `json:"description"`
 	Photo       string `json:"photo"`
 
-	BranchSuppliesStock    []BranchSupplyStock     `json:"branch_suplies_stock"`
-	InventorySuppliesStock []InventorySupplieStock `json:"inventory_supplies_stock"`
+	BranchSuppliesStock    []BranchSupplyStock    `json:"branch_suplies_stock"`
+	InventorySuppliesStock []InventorySupplyStock `json:"inventory_supplies_stock"`
 }
 
 type Article struct {

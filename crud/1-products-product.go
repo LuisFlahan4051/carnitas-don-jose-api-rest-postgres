@@ -122,39 +122,7 @@ func GetFoodType(id uint, root bool) (models.FoodType, error) {
 }
 
 func DeleteFoodType(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "food_types"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("food_types", id, root)
 }
 
 func UpdateFoodType(updatingFoodType *models.FoodType, root bool) error {
@@ -312,39 +280,7 @@ func GetFoodMeat(id uint, root bool) (models.FoodMeat, error) {
 }
 
 func DeleteFoodMeat(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "food_meats"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("food_meats", id, root)
 }
 
 func UpdateFoodMeat(updatingFoodMeat *models.FoodMeat, root bool) error {
@@ -514,39 +450,7 @@ func GetFood(id uint, root bool) (models.Food, error) {
 }
 
 func DeleteFood(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "foods"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("foods", id, root)
 }
 
 func UpdateFood(updatingFood *models.Food, root bool) error {
@@ -708,39 +612,7 @@ func GetDrinkSize(id uint, root bool) (models.DrinkSize, error) {
 }
 
 func DeleteDrinkSize(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "drink_sizes"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("drink_sizes", id, root)
 }
 
 func UpdateDrinkSize(updatingDrinkSize *models.DrinkSize, root bool) error {
@@ -898,39 +770,7 @@ func GetDrinkFlavor(id uint, root bool) (models.DrinkFlavor, error) {
 }
 
 func DeleteDrinkFlavor(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "drink_flavors"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("drink_flavors", id, root)
 }
 
 func UpdateDrinkFlavor(updatingDrinkFlavor *models.DrinkFlavor, root bool) error {
@@ -1100,39 +940,7 @@ func GetDrink(id uint, root bool) (models.Drink, error) {
 }
 
 func DeleteDrink(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "drinks"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("drinks", id, root)
 }
 
 func UpdateDrink(updatingDrink *models.Drink, root bool) error {
@@ -1303,39 +1111,7 @@ func GetProduct(id uint, root bool) (models.Product, error) {
 }
 
 func DeleteProduct(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "products"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("products", id, root)
 }
 
 func UpdateProduct(updatingProduct *models.Product, root bool) error {
@@ -1505,39 +1281,7 @@ func GetProductFood(id uint, root bool) (models.ProductFood, error) {
 }
 
 func DeleteProductFood(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "product_foods"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("product_foods", id, root)
 }
 
 func UpdateProductFood(updatingProductFood *models.ProductFood, root bool) error {
@@ -1707,39 +1451,7 @@ func GetProductDrink(id uint, root bool) (models.ProductDrink, error) {
 }
 
 func DeleteProductDrink(id uint, root bool) error {
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "product_drinks"
-	if root {
-		query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", tableName)
-		_, err := db.Exec(query, id)
-		if err != nil {
-			return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-		return nil
-	}
-
-	if commons.IsDeleted(tableName, id) {
-		return errors.New("already deleted")
-	}
-
-	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", tableName)
-	result, err := db.Exec(query, id)
-	if err != nil {
-		return fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to delete one %s ERROR: %s", tableName, err.Error())
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("%s not found", tableName)
-	}
-
-	return nil
+	return commons.DeleteFromTableById("product_drinks", id, root)
 }
 
 func UpdateProductDrink(updatingProductDrink *models.ProductDrink, root bool) error {
