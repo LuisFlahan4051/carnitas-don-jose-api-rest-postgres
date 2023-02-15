@@ -20,12 +20,12 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
 	}
-	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+	root := maxAccessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 
 	user, err := crud.GetUser(uint(id), root)
 	if err != nil {
@@ -33,37 +33,37 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	inheritUserRoles, err := crud.GetInheritUserRolesTODO(user.Id, root)
-	if err != nil && !strings.Contains(err.Error(), "inherit_user_roles not found") {
+	inheritUserRoles, err := crud.GetInheritUserRoles(root)
+	if err != nil && !(strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "no rows in result set")) {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
 	}
 
 	for _, inheritUserRole := range inheritUserRoles {
-		if inheritUserRole.AccessLevel == commons.ROOT {
+		if inheritUserRole.UserID == user.Id && inheritUserRole.RoleID == commons.ROOT {
 			commons.Logcatch(writer, http.StatusBadRequest, errors.New("user already root"))
 			return
 		}
 	}
 
-	const rootRoleID = 1
-	inheritUserRole := models.InheritUserRole{
+	newInheritUserRole := models.InheritUserRole{
 		UserID: user.Id,
-		RoleID: rootRoleID,
+		RoleID: commons.ROOT,
 	}
-	err = crud.NewInheritUserRole(&inheritUserRole)
+	err = crud.NewInheritUserRole(&newInheritUserRole)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
 		return
 	}
 
-	role, err := crud.GetRole(rootRoleID, root)
+	/*rootRole, err := crud.GetRole(commons.ROOT, root)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
 	}
 
-	user.InheritUserRoles = append(user.InheritUserRoles, role)
+	user.InheritUserRoles = append(user.InheritUserRoles, rootRole)
+	*/
 
 	crud.NewServerActionLog(models.ServerLogs{
 		UserID:      adminBufferId,
@@ -73,45 +73,9 @@ func makeUserRoot(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusOK)
-	json.NewEncoder(writer).Encode(user)
-}
-
-func verifyUser(writer http.ResponseWriter, request *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(request)["user_id"])
-	if err != nil {
-		commons.Logcatch(writer, http.StatusBadRequest, errors.New("invalid user/{id} value"))
-		return
-	}
-
-	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
-	if err != nil {
-		commons.Logcatch(writer, http.StatusUnauthorized, err)
-		return
-	}
-	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
-
-	user, err := crud.GetUser(uint(id), root)
-	if err != nil {
-		commons.Logcatch(writer, http.StatusInternalServerError, err)
-		return
-	}
-
-	*user.Verified = true
-	crud.UpdateUser(&user, root)
-	if err != nil {
-		commons.Logcatch(writer, http.StatusInternalServerError, err)
-		return
-	}
-
-	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      adminBufferId,
-		Root:        &root,
-		Transaction: "verifyUser",
-	})
-
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	json.NewEncoder(writer).Encode(user)
+	// user.Password = ""
+	//json.NewEncoder(writer).Encode(user)
+	json.NewEncoder(writer).Encode("done")
 }
 
 func seeSeverLogs(writer http.ResponseWriter, request *http.Request) {
@@ -158,12 +122,12 @@ func seeSeverLogs(writer http.ResponseWriter, request *http.Request) {
 }
 
 func cleanServerLogs(writer http.ResponseWriter, request *http.Request) {
-	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
 	}
-	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+	root := maxAccessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 	if !root {
 		commons.Logcatch(writer, http.StatusUnauthorized, errors.New("only root can clean logs"))
 		return
@@ -183,16 +147,16 @@ func cleanServerLogs(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(http.StatusOK)
-	json.NewEncoder(writer).Encode("logs cleaned")
+	json.NewEncoder(writer).Encode("done")
 }
 
 func seeAdmins(writer http.ResponseWriter, request *http.Request) {
-	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ROOT)
+	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.ROOT)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusUnauthorized, err)
 		return
 	}
-	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+	root := maxAccessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
 	if !root {
 		commons.Logcatch(writer, http.StatusUnauthorized, errors.New("only root can see the admins"))
 		return

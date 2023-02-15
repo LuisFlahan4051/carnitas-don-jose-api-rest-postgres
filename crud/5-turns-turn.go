@@ -51,7 +51,7 @@ func NewTurn(turn *models.Turn) error {
 	return nil
 }
 
-func GetTurns(root bool) ([]models.Turn, error) {
+func GetTurns(root bool, relationalIDs *map[string]uint) ([]models.Turn, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -63,6 +63,21 @@ func GetTurns(root bool) ([]models.Turn, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -163,7 +178,7 @@ func UpdateTurn(updatingTurn *models.Turn, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingTurn, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -339,7 +354,7 @@ func UpdateTurnUserRole(updatingTurnUserRole *models.TurnUserRole, root bool) er
 
 	query, data, err := commons.GetQuery(tableName, *updatingTurnUserRole, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -503,7 +518,7 @@ func UpdateTurnSafebox(updatingTurnSafebox *models.TurnSafebox, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *updatingTurnSafebox, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}

@@ -10,10 +10,6 @@ func SetRootHandleActions(router *mux.Router, URLs *[]string) {
 	router.HandleFunc(route, makeUserRoot).Methods("POST")
 	*URLs = append(*URLs, route)
 
-	route = "/user/{user_id}/verify"
-	router.HandleFunc(route, verifyUser).Methods("POST")
-	*URLs = append(*URLs, route)
-
 	// Can add ?page=1 to get the a page or send a jsdon body {"page":1, ...}, if just enter the route it will return the logs of the last 24 hours
 	route = "/server/logs"
 	router.HandleFunc(route, seeSeverLogs).Methods("GET")

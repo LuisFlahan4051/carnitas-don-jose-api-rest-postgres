@@ -1,6 +1,6 @@
 package models
 
-import "time"
+/*import "time"
 
 //Return old values if new values are empty or are equals and return new values otherwise
 func CompareString(newString string, oldString string) string {
@@ -92,3 +92,4 @@ func (oldBranch *Branch) CompareBranch(newBranch Branch) {
 	oldBranch.Name = CompareString(newBranch.Name, oldBranch.Name)
 	oldBranch.Address = CompareString(newBranch.Address, oldBranch.Address)
 }
+*/

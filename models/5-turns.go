@@ -8,8 +8,8 @@ type Turn struct {
 	ID
 
 	StartDate time.Time  `json:"start_date"`
-	EndDate   *time.Time `json:"end_date"`
-	Active    *bool      `json:"active"`
+	EndDate   *time.Time `json:"end_date,omitempty"`
+	Active    *bool      `json:"active,omitempty"`
 
 	IncomesCounter    float64 `json:"incomes_counter"`
 	NetIncomesCounter float64 `json:"netincomes_counter"`
@@ -17,18 +17,18 @@ type Turn struct {
 
 	UserID          uint           `json:"user_id"`
 	BranchID        uint           `json:"branch_id"`
-	TurnUserRoles   []TurnUserRole `json:"user_roles"`
-	SafeboxReceived TurnSafebox    `json:"safebox_received"`
-	SafeboxFinished TurnSafebox    `json:"safebox_finished"`
-	Sales           []Sale         `json:"sales"`
-	Inventories     []Inventory    `json:"inventories"`
+	TurnUserRoles   []TurnUserRole `json:"user_roles,omitempty"`
+	SafeboxReceived []TurnSafebox  `json:"safebox_received,omitempty"`
+	SafeboxFinished []TurnSafebox  `json:"safebox_finished,omitempty"`
+	Sales           []Sale         `json:"sales,omitempty"`
+	Inventories     []Inventory    `json:"inventories,omitempty"`
 }
 
 type TurnUserRole struct {
 	ID
 
 	LoginDate  time.Time  `json:"login_date"`
-	LogoutDate *time.Time `json:"logout_date"`
+	LogoutDate *time.Time `json:"logout_date,omitempty"`
 
 	UserID uint `json:"user_id"`
 	TurnID uint `json:"turn_id"`

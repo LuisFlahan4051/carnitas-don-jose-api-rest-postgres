@@ -8,6 +8,16 @@ func SetSupervisorHandleActions(router *mux.Router, URLs *[]string) {
 	router.HandleFunc(route, seeBranch).Methods("GET")
 	*URLs = append(*URLs, route)
 
+	route = "/branch/{branch_id}/supplies"
+	router.HandleFunc(route, seeSuppliesAtBranchStock).Methods("GET")
+	*URLs = append(*URLs, route)
+
+	route = "/branch/{branch_id}/articles"
+	router.HandleFunc(route, seeArticlesAtBranchStock).Methods("GET")
+	*URLs = append(*URLs, route)
+
+	//
+
 	route = "/user"
 	router.HandleFunc(route, registNewUser).Methods("POST")
 	*URLs = append(*URLs, route)

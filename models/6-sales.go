@@ -8,29 +8,29 @@ type Sale struct {
 	ID
 
 	EntryDate   time.Time  `json:"entry_date"`
-	ExitDate    *time.Time `json:"exit_date"`
-	TableNumber *uint      `json:"table_number"`
-	Packed      *bool      `json:"packed"`
+	ExitDate    *time.Time `json:"exit_date,omitempty"`
+	TableNumber *uint      `json:"table_number,omitempty"`
+	Packed      *bool      `json:"packed,omitempty"`
 
 	UserID         uint           `json:"user_id"`
 	BranchID       uint           `json:"branch_id"`
 	TurnID         uint           `json:"turn_id"`
-	SalesProducts  []SaleProduct  `json:"sales_products"`
-	SalesIncomes   []SaleIncome   `json:"sales_incomes"`
-	SalesExpenses  []SaleExpense  `json:"sales_expenses"`
-	SalesArguments []SaleArgument `json:"sales_arguments"`
+	SalesProducts  []SaleProduct  `json:"sales_products,omitempty"`
+	SalesIncomes   []SaleIncome   `json:"sales_incomes,omitempty"`
+	SalesExpenses  []SaleExpense  `json:"sales_expenses,omitempty"`
+	SalesArguments []SaleArgument `json:"sales_arguments,omitempty"`
 }
 
 type SaleProduct struct {
 	ID
 
 	Done              bool     `json:"done"`
-	GrammageQuantity  *uint    `json:"grammage_quantity"`
-	KilogrammagePrice *float64 `json:"kilogrammage_price"`
-	UnitQuantity      *uint    `json:"unit_quantity"`
-	UnitPrice         *float64 `json:"unit_price"`
-	Discount          *float64 `json:"discount"`
-	Tax               *float64 `json:"tax"`
+	GrammageQuantity  *uint    `json:"grammage_quantity,omitempty"`
+	KilogrammagePrice *float64 `json:"kilogrammage_price,omitempty"`
+	UnitQuantity      *uint    `json:"unit_quantity,omitempty"`
+	UnitPrice         *float64 `json:"unit_price,omitempty"`
+	Discount          *float64 `json:"discount,omitempty"`
+	Tax               *float64 `json:"tax,omitempty"`
 
 	SaleID    uint `json:"sale_id"`
 	ProductID uint `json:"product_id"`

@@ -11,6 +11,61 @@ import (
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/models"
 )
 
+/*func GetBranchSafeboxesTEST(tableName string, root bool, relationalIDs *map[string]uint) ([]models.BranchSafebox, error) {
+	db := database.Connect()
+	defer db.Close()
+	var model models.BranchSafebox
+	var data []models.BranchSafebox
+
+	query, _, err := commons.GetQuery(tableName, model, "SELECT", false)
+	if err != nil {
+		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
+	}
+
+	if !root {
+		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
+	}
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
+	}
+	defer rows.Close()
+
+	//Scan
+	jsonStrings, err := commons.DecodeRowsToJson(rows)
+	for _, jsonString := range jsonStrings {
+		json.Unmarshal([]byte(jsonString), &model)
+		data = append(data, model)
+	}
+	//----
+
+	if err != nil {
+		return nil, fmt.Errorf("can't decode the %s query ERROR: %s", tableName, err.Error())
+	}
+
+	if len(data) == 0 {
+		return nil, fmt.Errorf("%s not found", tableName)
+	}
+
+	return data, nil
+}*/
+
 func NewFoodType(foodType *models.FoodType) error {
 	db := database.Connect()
 	defer db.Close()
@@ -144,7 +199,7 @@ func UpdateFoodType(updatingFoodType *models.FoodType, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingFoodType, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -302,7 +357,7 @@ func UpdateFoodMeat(updatingFoodMeat *models.FoodMeat, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingFoodMeat, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -364,7 +419,7 @@ func NewFood(food *models.Food) error {
 	return nil
 }
 
-func GetFoods(root bool) ([]models.Food, error) {
+func GetFoods(root bool, relationalIDs *map[string]uint) ([]models.Food, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -377,6 +432,21 @@ func GetFoods(root bool) ([]models.Food, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -472,7 +542,7 @@ func UpdateFood(updatingFood *models.Food, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingFood, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -634,7 +704,7 @@ func UpdateDrinkSize(updatingDrinkSize *models.DrinkSize, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingDrinkSize, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -792,7 +862,7 @@ func UpdateDrinkFlavor(updatingDrinkFlavor *models.DrinkFlavor, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *updatingDrinkFlavor, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -854,7 +924,7 @@ func NewDrink(drink *models.Drink) error {
 	return nil
 }
 
-func GetDrinks(root bool) ([]models.Drink, error) {
+func GetDrinks(root bool, relationalIDs *map[string]uint) ([]models.Drink, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -867,6 +937,21 @@ func GetDrinks(root bool) ([]models.Drink, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -962,7 +1047,7 @@ func UpdateDrink(updatingDrink *models.Drink, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingDrink, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1133,7 +1218,7 @@ func UpdateProduct(updatingProduct *models.Product, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingProduct, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1197,7 +1282,7 @@ func NewProductFood(productFood *models.ProductFood) error {
 	return nil
 }
 
-func GetProductFoods(root bool) ([]models.ProductFood, error) {
+func GetProductFoods(root bool, relationalIDs *map[string]uint) ([]models.ProductFood, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -1210,6 +1295,21 @@ func GetProductFoods(root bool) ([]models.ProductFood, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -1303,7 +1403,7 @@ func UpdateProductFood(updatingProductFood *models.ProductFood, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *updatingProductFood, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1367,7 +1467,7 @@ func NewProductDrink(productDrink *models.ProductDrink) error {
 	return nil
 }
 
-func GetProductDrinks(root bool) ([]models.ProductDrink, error) {
+func GetProductDrinks(root bool, relationalIDs *map[string]uint) ([]models.ProductDrink, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -1380,6 +1480,21 @@ func GetProductDrinks(root bool) ([]models.ProductDrink, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -1473,7 +1588,7 @@ func UpdateProductDrink(updatingProductDrink *models.ProductDrink, root bool) er
 
 	query, data, err := commons.GetQuery(tableName, *updatingProductDrink, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}

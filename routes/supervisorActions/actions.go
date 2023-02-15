@@ -3,8 +3,9 @@ package supervisorActions
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"errors"
 	"os"
@@ -15,10 +16,122 @@ import (
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/crud"
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/models"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 )
 
-func seeBranch(writer http.ResponseWriter, request *http.Request) {}
+func seeBranch(writer http.ResponseWriter, request *http.Request) {
+	id, err := strconv.Atoi(mux.Vars(request)["branch_id"])
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, errors.New("invalid user/{id} value"))
+		return
+	}
+
+	adminBufferId, accessLevel, err := commons.Authentication(request, commons.ADMIN)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusUnauthorized, err)
+		return
+	}
+
+	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+
+	branch, err := crud.GetBranch(uint(id), root)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+
+	relationIDs := make(map[string]uint)
+	relationIDs["branch_id"] = branch.Id
+
+	relationBranchSafebox, err := crud.GetBranchSafeboxes(root, &relationIDs)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.BranchSafeboxes = relationBranchSafebox
+
+	relationBranchProducts, err := crud.GetBranchProductsStock(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.BranchProductsStock = relationBranchProducts
+
+	relationBranchSupplies, err := crud.GetBranchSuppliesStock(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.BranchSuppliesStock = relationBranchSupplies
+
+	relationBranchArticles, err := crud.GetBranchArticlesStock(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.BranchArticlesStock = relationBranchArticles
+
+	branchUsers, err := crud.GetUsers(root, &relationIDs)
+	for _, user := range branchUsers {
+		user.Password = ""
+	}
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.Users = branchUsers
+
+	relationBranchUserRoles, err := crud.GetBranchUserRoles(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.BranchUserRoles = relationBranchUserRoles
+
+	relationBranchTurns, err := crud.GetTurns(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.Turns = relationBranchTurns
+
+	branchSales, err := crud.GetSales(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.Sales = branchSales
+
+	branchInventories, err := crud.GetInventories(root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.Inventories = branchInventories
+
+	var since time.Time
+	since = since.Add(time.Hour * 24)
+	allNotifications := models.Pagination{
+		Since: &since,
+	}
+	branchAdminNotifications, err := crud.GetNotifications(allNotifications, "", root, &relationIDs)
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		commons.Logcatch(writer, http.StatusInternalServerError, err)
+		return
+	}
+	branch.AdminNotifications = branchAdminNotifications
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      adminBufferId,
+		Root:        &root,
+		Transaction: "seeBranch",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(branch)
+}
 
 func registNewUser(writer http.ResponseWriter, request *http.Request) {
 	adminBufferId, maxAccessLevel, err := commons.Authentication(request, commons.SUPERVISOR)
@@ -41,12 +154,22 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 	file, handle, err := request.FormFile("profile_picture")
 	existFile := true
 	if err != nil {
-		if err.Error() != "http: no such file" {
+		if !strings.Contains(err.Error(), "no such file") {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
 		existFile = false
 	}
+
+	if *user.BranchID == 0 {
+		adminBuffer, _ := crud.GetUser(adminBufferId, false)
+		user.BranchID = adminBuffer.BranchID
+		if user.BranchID == nil {
+			commons.Logcatch(writer, http.StatusBadRequest, errors.New("root user must have a origin branch"))
+			return
+		}
+	}
+	user.OriginBranchID = user.BranchID
 
 	if existFile {
 		defer file.Close()
@@ -79,6 +202,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		err = commons.SavePictureAsWebp(file, localPathStorage, newFileName)
 
 		if err != nil {
+			crud.DeleteUser(user.Id, true)
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
@@ -88,6 +212,7 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		user.Photo = &pathStorage
 		err = crud.UpdateUser(&user, false)
 		if err != nil {
+			crud.DeleteUser(user.Id, true)
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
@@ -124,6 +249,10 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 
 func seeUsersAtBranch(writer http.ResponseWriter, request *http.Request) {}
 
+func seeSuppliesAtBranchStock(writer http.ResponseWriter, request *http.Request) {}
+
+func seeArticlesAtBranchStock(writer http.ResponseWriter, request *http.Request) {}
+
 //
 
 func activeUserContranctAtBranch(writer http.ResponseWriter, request *http.Request) {}
@@ -159,16 +288,10 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var notification models.AdminNotification
+	var notificationImages []models.AdminNotificationImage
 	decoderFormFields := schema.NewDecoder()
 	decoderFormFields.SetAliasTag("json")
-	err = decoderFormFields.Decode(&notification, request.Form)
-	log.Println(err)
-
-	err = crud.NewNotification(&notification)
-	if err != nil {
-		commons.Logcatch(writer, http.StatusBadRequest, err)
-		return
-	}
+	decoderFormFields.Decode(&notification, request.Form)
 
 	form := request.MultipartForm
 	files := form.File["images"]
@@ -197,16 +320,33 @@ func sendNotification(writer http.ResponseWriter, request *http.Request) {
 		pathStorage := fmt.Sprintf("%s://%s:%s/notifications/%d/images/%s", os.Getenv("HTTP"), os.Getenv("SERVERHOST"), os.Getenv("SERVERPORT"), notification.Id, newFileName)
 
 		image := models.AdminNotificationImage{
-			Image:          pathStorage,
-			NotificationID: notification.Id,
+			Image: pathStorage,
 		}
 
-		err = crud.NewNotificationImage(&image)
+		/*err = crud.NewNotificationImage(&image)
 		if err != nil {
 			commons.Logcatch(writer, http.StatusBadRequest, err)
 			return
 		}
 
+		notification.Images = append(notification.Images, image)*/
+
+		notificationImages = append(notificationImages, image)
+	}
+
+	err = crud.NewNotification(&notification)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	for _, image := range notificationImages {
+		image.NotificationID = notification.Id
+		err = crud.NewNotificationImage(&image)
+		if err != nil {
+			commons.Logcatch(writer, http.StatusBadRequest, err)
+			return
+		}
 		notification.Images = append(notification.Images, image)
 	}
 

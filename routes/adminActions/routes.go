@@ -59,12 +59,12 @@ func SetAdminHandleActions(router *mux.Router, URLs *[]string) {
 
 	//
 
-	route = "/branch/{branch_id}/supply/{supply_id}"
-	router.HandleFunc(route, addSuppliesToBranchStock).Methods("POST")
+	route = "/branch/{branch_id}/add/supply/{supply_id}"
+	router.HandleFunc(route, addSupplyToBranchStock).Methods("POST")
 	*URLs = append(*URLs, route)
 
-	route = "/branch/{branch_id}/supply/{supply_id}"
-	router.HandleFunc(route, removeSuppliesFromBranchStock).Methods("DELETE")
+	route = "/branch/{branch_id}/remove/supply/{supply_id}"
+	router.HandleFunc(route, removeSupplyFromBranchStock).Methods("DELETE")
 	*URLs = append(*URLs, route)
 
 	//
@@ -91,12 +91,12 @@ func SetAdminHandleActions(router *mux.Router, URLs *[]string) {
 
 	//
 
-	route = "/branch/{branch_id}/article/{article_id}"
-	router.HandleFunc(route, addArticlesToBranchStock).Methods("POST")
+	route = "/branch/{branch_id}/add/article/{article_id}"
+	router.HandleFunc(route, addArticleToBranchStock).Methods("POST")
 	*URLs = append(*URLs, route)
 
-	route = "/branch/{branch_id}/article/{article_id}"
-	router.HandleFunc(route, removeArticlesFromBranchStock).Methods("PATCH")
+	route = "/branch/{branch_id}/remove/article/{article_id}"
+	router.HandleFunc(route, removeArticleFromBranchStock).Methods("PATCH")
 	*URLs = append(*URLs, route)
 
 	//
@@ -172,6 +172,10 @@ func SetAdminHandleActions(router *mux.Router, URLs *[]string) {
 
 	route = "/user/{user_id}"
 	router.HandleFunc(route, changeUser).Methods("PATCH")
+	*URLs = append(*URLs, route)
+
+	route = "/user/{user_id}/verify"
+	router.HandleFunc(route, verifyUser).Methods("POST")
 	*URLs = append(*URLs, route)
 
 	route = "/user/{user_id}/make/admin"

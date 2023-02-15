@@ -146,7 +146,7 @@ func UpdateBranch(updatingBranch *models.Branch, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranch, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -210,7 +210,7 @@ func NewBranchSafebox(branchSafebox *models.BranchSafebox) error {
 	return nil
 }
 
-func GetBranchSafeboxes(root bool) ([]models.BranchSafebox, error) {
+func GetBranchSafeboxes(root bool, relationalIDs *map[string]uint) ([]models.BranchSafebox, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -222,6 +222,21 @@ func GetBranchSafeboxes(root bool) ([]models.BranchSafebox, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -316,7 +331,7 @@ func UpdateBranchSafebox(updatingBranchSafebox *models.BranchSafebox, root bool)
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranchSafebox, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -381,7 +396,7 @@ func NewBranchProductStock(branchProductStock *models.BranchProductStock) error 
 	return nil
 }
 
-func GetBranchProductsStock(root bool) ([]models.BranchProductStock, error) {
+func GetBranchProductsStock(root bool, relationalIDs *map[string]uint) ([]models.BranchProductStock, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -393,6 +408,21 @@ func GetBranchProductsStock(root bool) ([]models.BranchProductStock, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -488,7 +518,7 @@ func UpdateBranchProductStock(updatingBranchProductStock *models.BranchProductSt
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranchProductStock, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -554,7 +584,7 @@ func NewBranchSupplyStock(branchSupplyStock *models.BranchSupplyStock) error {
 	return nil
 }
 
-func GetBranchSuppliesStocks(root bool) ([]models.BranchSupplyStock, error) {
+func GetBranchSuppliesStock(root bool, relationalIDs *map[string]uint) ([]models.BranchSupplyStock, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -566,6 +596,21 @@ func GetBranchSuppliesStocks(root bool) ([]models.BranchSupplyStock, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -661,7 +706,7 @@ func UpdateBranchSupplyStock(updatingBranchSupplyStock *models.BranchSupplyStock
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranchSupplyStock, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -727,7 +772,7 @@ func NewBranchArticleStock(branchArticleStock *models.BranchArticleStock) error 
 	return nil
 }
 
-func GetBranchArticleStocks(root bool) ([]models.BranchArticleStock, error) {
+func GetBranchArticlesStock(root bool, relationalIDs *map[string]uint) ([]models.BranchArticleStock, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -739,6 +784,21 @@ func GetBranchArticleStocks(root bool) ([]models.BranchArticleStock, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -834,7 +894,7 @@ func UpdateBranchArticleStock(updatingBranchArticleStock *models.BranchArticleSt
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranchArticleStock, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}

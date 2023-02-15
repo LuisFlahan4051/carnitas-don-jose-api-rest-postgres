@@ -21,7 +21,7 @@ type User struct {
 	Name     *string `json:"name,omitempty"`
 	Lastname *string `json:"lastname,omitempty"`
 	Username string  `json:"username"`
-	Password string  `json:"password"`
+	Password string  `json:"password,omitempty"`
 	Photo    *string `json:"photo,omitempty"`
 
 	// Just need to get the bytes of the file and save it.

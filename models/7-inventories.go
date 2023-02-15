@@ -19,7 +19,7 @@ type Inventory struct {
 	InventoryProductsStocks []InventoryProductStock `json:"inventory_products_stocks"`
 	InventorySuppliesStocks []InventorySupplyStock  `json:"inventory_supplies_stocks"`
 	InventoryArticlesStocks []InventoryArticleStock `json:"inventory_articles_stocks"`
-	InventorySafebox        `json:"inventory_safebox"`
+	InventorySafebox        `flahan:"ignore" json:"inventory_safebox"`
 }
 
 type InventoryProductStock struct {

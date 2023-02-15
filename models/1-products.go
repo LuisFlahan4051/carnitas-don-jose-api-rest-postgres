@@ -6,8 +6,8 @@ import (
 
 type ID struct {
 	Id        uint       `json:"id"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
@@ -16,27 +16,27 @@ type FoodType struct {
 
 	Name string `json:"name"`
 
-	Foods []Food `json:"foods"`
+	Foods []Food `json:"foods,omitempty"`
 }
 
 type FoodMeat struct {
 	ID
 
 	Name  string `json:"name"`
-	Foods []Food `json:"foods"`
+	Foods []Food `json:"foods,omitempty"`
 }
 
 type Food struct {
 	ID
 
 	Name        string  `json:"name"`
-	Description *string `json:"description"`
-	Photo       *string `json:"photo"`
+	Description *string `json:"description,omitempty"`
+	Photo       *string `json:"photo,omitempty"`
 
 	FoodTypeID uint `json:"food_type_id"`
 	FoodMeatID uint `json:"food_meat_id"`
 
-	ProductFoods []ProductFood `json:"product_foods"`
+	ProductFoods []ProductFood `json:"product_foods,omitempty"`
 }
 
 type DrinkSize struct {
@@ -44,14 +44,14 @@ type DrinkSize struct {
 
 	Name string `json:"name"`
 
-	Drinks []Drink `json:"drinks"`
+	Drinks []Drink `json:"drinks,omitempty"`
 }
 
 type DrinkFlavor struct {
 	ID
 
 	Name   string  `json:"name"`
-	Drinks []Drink `json:"drinks"`
+	Drinks []Drink `json:"drinks,omitempty"`
 }
 
 type Drink struct {
@@ -64,21 +64,21 @@ type Drink struct {
 	DrinkSizeID   uint `json:"drink_size_id"`
 	DrinkFlavorID uint `json:"drink_flavor_id"`
 
-	ProductDrinks []ProductDrink `json:"product_drinks"`
+	ProductDrinks []ProductDrink `json:"product_drinks,omitempty"`
 }
 
 type Product struct {
 	ID
 	Name        string  `json:"name"`
-	Description *string `json:"description"`
+	Description *string `json:"description,omitempty"`
 	Price       float64 `json:"price"`
-	Photo       *string `json:"photo"`
+	Photo       *string `json:"photo,omitempty"`
 
-	ProductFoods           []ProductFood           `json:"product_foods"`
-	ProductDrinks          []ProductDrink          `json:"product_drinks"`
-	BranchProductsStock    []BranchProductStock    `json:"branch_products_stock"`
-	SalesProducts          []SaleProduct           `json:"sales_products"`
-	InventoryProductsStock []InventoryProductStock `json:"inventory_products_stock"`
+	ProductFoods           []ProductFood           `json:"product_foods,omitempty"`
+	ProductDrinks          []ProductDrink          `json:"product_drinks,omitempty"`
+	BranchProductsStock    []BranchProductStock    `json:"branch_products_stock,omitempty"`
+	SalesProducts          []SaleProduct           `json:"sales_products,omitempty"`
+	InventoryProductsStock []InventoryProductStock `json:"inventory_products_stock,omitempty"`
 }
 
 type ProductFood struct {

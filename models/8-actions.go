@@ -14,8 +14,8 @@ type UserSafeboxAction struct {
 type ActionSafebox struct {
 	ID
 
-	SafeboxActionID uint `gorm:"unique" json:"safebox_action_id"`
-	SafeboxID       uint `gorm:"unique" json:"safebox_id"`
+	SafeboxActionID uint `json:"safebox_action_id"`
+	SafeboxID       uint `json:"safebox_id"`
 }
 
 type AdminNotification struct {
@@ -49,7 +49,7 @@ type ServerLogs struct {
 
 type Pagination struct {
 	Page  *int       `json:"page,omitempty"`
-	Today *bool      `json:"today"`
-	Since *time.Time `json:"since"`
-	To    *time.Time `json:"to"`
+	Today *bool      `json:"today,omitempty"`
+	Since *time.Time `json:"since,omitempty"`
+	To    *time.Time `json:"to,omitempty"`
 }

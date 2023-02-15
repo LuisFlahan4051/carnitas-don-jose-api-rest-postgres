@@ -50,7 +50,7 @@ func NewSale(sale *models.Sale) error {
 	return nil
 }
 
-func GetSales(root bool) ([]models.Sale, error) {
+func GetSales(root bool, relationalIDs *map[string]uint) ([]models.Sale, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -62,6 +62,21 @@ func GetSales(root bool) ([]models.Sale, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -160,7 +175,7 @@ func UpdateSale(updatingSale *models.Sale, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingSale, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -347,7 +362,7 @@ func UpdateSaleProduct(updatingSaleProduct *models.SaleProduct, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *updatingSaleProduct, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -515,7 +530,7 @@ func UpdateSaleIncome(updatingSaleIncome *models.SaleIncome, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingSaleIncome, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -676,7 +691,7 @@ func UpdateSaleExpense(updatingSaleExpense *models.SaleExpense, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *updatingSaleExpense, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -837,7 +852,7 @@ func UpdateSaleArgument(updatingSaleArgument *models.SaleArgument, root bool) er
 
 	query, data, err := commons.GetQuery(tableName, *updatingSaleArgument, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}

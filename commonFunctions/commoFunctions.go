@@ -2,6 +2,8 @@ package commonFunctions
 
 import (
 	"bytes"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
@@ -45,7 +47,7 @@ func valueIsNull(fieldType reflect.Kind, value reflect.Value) bool {
 	case reflect.Bool:
 		return !value.Bool()
 	case reflect.String:
-		return value.String() == "" || value.String() == "0001-01-01T00:00:00Z" || value.String() == "0001-01-01 00:00:00 +0000 UTC"
+		return value.String() == "" || strings.Contains(value.String(), "0001-01-01")
 	case reflect.Slice:
 		return value.Len() == 0
 	case reflect.Struct:
@@ -84,6 +86,8 @@ func GetValueField(fieldType reflect.Kind, value reflect.Value) interface{} {
 	return nil
 }
 
+/*
+// Can add `flahan:"ignore"` into structs to ignore a field
 func GetStructFieldsWithoutNull(anyStruct interface{}) ([]string, map[string]interface{}) {
 	var fields []string
 	valueFields := make(map[string]interface{})
@@ -109,7 +113,8 @@ func GetStructFieldsWithoutNull(anyStruct interface{}) ([]string, map[string]int
 		valueFieldIsNull := valueIsNull(fieldType, value)
 
 		jsonTag := _field.Tag.Get("json")
-		if !valueFieldIsNull && jsonTag != "" {
+		flahanTag := _field.Tag.Get("flahan")
+		if !valueFieldIsNull && jsonTag != "" && flahanTag != "ignore" {
 			jsonTagOptions := strings.Split(jsonTag, ",")
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
@@ -123,14 +128,17 @@ func GetStructFieldsWithoutNull(anyStruct interface{}) ([]string, map[string]int
 	return fields, valueFields
 }
 
+// Can add `flahan:"ignore"` into structs to ignore a field
 func GetStructFields(anyStruct interface{}) ([]string, map[string]interface{}) {
 	var fields []string
 	valueFields := make(map[string]interface{})
 
 	_struct := reflect.ValueOf(anyStruct)
+
 	for i := 0; i < _struct.NumField(); i++ {
 		_field := _struct.Type().Field(i)
 		value := _struct.Field(i)
+
 		fieldType := _field.Type.Kind()
 
 		switch fieldType {
@@ -144,7 +152,8 @@ func GetStructFields(anyStruct interface{}) ([]string, map[string]interface{}) {
 		}
 
 		jsonTag := _struct.Type().Field(i).Tag.Get("json")
-		if jsonTag != "" {
+		flahanTag := _struct.Type().Field(i).Tag.Get("flahan")
+		if jsonTag != "" && flahanTag != "ignore" {
 			jsonTagOptions := strings.Split(jsonTag, ",")
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
@@ -159,6 +168,7 @@ func GetStructFields(anyStruct interface{}) ([]string, map[string]interface{}) {
 	return fields, valueFields
 }
 
+// Can add `flahan:"ignore"` into structs to ignore a field
 func GetStructFieldsWithoutSlices(anyStruct interface{}) ([]string, map[string]interface{}) {
 	var fields []string
 	valueFields := make(map[string]interface{})
@@ -180,7 +190,8 @@ func GetStructFieldsWithoutSlices(anyStruct interface{}) ([]string, map[string]i
 		}
 
 		jsonTag := _struct.Type().Field(i).Tag.Get("json")
-		if fieldType != reflect.Slice && jsonTag != "" {
+		flahanTag := _struct.Type().Field(i).Tag.Get("flahan")
+		if fieldType != reflect.Slice && jsonTag != "" && flahanTag != "ignore" {
 			jsonTagOptions := strings.Split(jsonTag, ",")
 			fieldName := jsonTagOptions[0]
 			fields = append(fields, fieldName)
@@ -192,6 +203,135 @@ func GetStructFieldsWithoutSlices(anyStruct interface{}) ([]string, map[string]i
 	}
 
 	return fields, valueFields
+}
+
+// Can add `flahan:"ignore"` into structs to ignore a field
+func GetStructFieldsWithoutSlicesAndNotNull(anyStruct interface{}) ([]string, map[string]interface{}) {
+	var fields []string
+	valueFields := make(map[string]interface{})
+
+	_struct := reflect.ValueOf(anyStruct)
+	for i := 0; i < _struct.NumField(); i++ {
+		_field := _struct.Type().Field(i)
+		value := _struct.Field(i)
+		fieldType := _field.Type.Kind()
+
+		switch fieldType {
+		case reflect.Struct, reflect.Interface:
+			subStruct := _struct.Field(i).Interface()
+			subFields, subValueFields := GetStructFieldsWithoutSlices(subStruct)
+			fields = append(fields, subFields...)
+			for subKey, subValue := range subValueFields {
+				valueFields[subKey] = subValue
+			}
+		}
+
+		valueFieldIsNull := valueIsNull(fieldType, value)
+
+		jsonTag := _struct.Type().Field(i).Tag.Get("json")
+		flahanTag := _struct.Type().Field(i).Tag.Get("flahan")
+		if fieldType != reflect.Slice && jsonTag != "" && !valueFieldIsNull && flahanTag != "ignore" {
+			jsonTagOptions := strings.Split(jsonTag, ",")
+			fieldName := jsonTagOptions[0]
+			fields = append(fields, fieldName)
+			valueField := GetValueField(fieldType, value)
+			if valueField != nil {
+				valueFields[fieldName] = valueField
+			}
+		}
+	}
+
+	return fields, valueFields
+}
+*/
+
+// Can add `flahan:"ignore"` into structs to ignore a field
+func GetStructFields(anyStruct interface{}, slices bool, nulls bool) ([]string, map[string]interface{}) {
+	var fields []string
+	valueFields := make(map[string]interface{})
+
+	_struct := reflect.ValueOf(anyStruct)
+
+	for i := 0; i < _struct.NumField(); i++ {
+		_field := _struct.Type().Field(i)
+		value := _struct.Field(i)
+
+		fieldType := _field.Type.Kind()
+		flahanTag := _struct.Type().Field(i).Tag.Get("flahan")
+
+		if flahanTag == "ignore" {
+			continue
+		}
+		switch fieldType {
+		case reflect.Struct, reflect.Interface:
+			subStruct := _struct.Field(i).Interface()
+			subFields, subValueFields := GetStructFields(subStruct, slices, nulls)
+			fields = append(fields, subFields...)
+			for subKey, subValue := range subValueFields {
+				valueFields[subKey] = subValue
+			}
+		}
+
+		valueFieldIsNull := valueIsNull(fieldType, value)
+
+		jsonTag := _struct.Type().Field(i).Tag.Get("json")
+		if jsonTag != "" {
+			if (!slices && fieldType == reflect.Slice) || (!nulls && valueFieldIsNull) {
+				continue
+			}
+
+			jsonTagOptions := strings.Split(jsonTag, ",")
+			fieldName := jsonTagOptions[0]
+			fields = append(fields, fieldName)
+
+			valueField := GetValueField(fieldType, value)
+			if valueField != nil {
+				valueFields[fieldName] = valueField
+			}
+		}
+	}
+
+	return fields, valueFields
+}
+
+func DecodeRowsToJson(rows *sql.Rows) ([]string, error) {
+	columns, _ := rows.Columns()
+	countColumns := len(columns)
+	values := make([]interface{}, countColumns)
+	valuePointers := make([]interface{}, countColumns)
+
+	var jsonEncodes []string
+	for rows.Next() {
+		for i := range columns {
+			valuePointers[i] = &values[i]
+		}
+
+		rows.Scan(valuePointers...)
+		mapToDecode := make(map[string]interface{})
+
+		for i, column := range columns {
+			value := values[i]
+
+			bytes, ok := value.([]byte)
+			var finalValue interface{}
+			if ok {
+				finalValue = string(bytes)
+			} else {
+				finalValue = value
+			}
+
+			mapToDecode[column] = finalValue
+		}
+
+		jsonEncode, err := json.Marshal(mapToDecode)
+		if err != nil {
+			return nil, fmt.Errorf("error while encoding map to json ERROR: %v", err)
+		}
+
+		jsonEncodes = append(jsonEncodes, string(jsonEncode))
+	}
+
+	return jsonEncodes, nil
 }
 
 // ------------------------ Query Builder ------------------------ //
@@ -242,7 +382,7 @@ func GetQuery(table string, strc interface{}, operation string, returning bool) 
 
 	switch operation {
 	case "INSERT":
-		fieldsSlice, fieldsValuesMap := GetStructFieldsWithoutNull(strc)
+		fieldsSlice, fieldsValuesMap := GetStructFields(strc, false, false)
 		fields := strings.Join(fieldsSlice, ", ")
 
 		index := getIndexFormated(fieldsSlice)
@@ -250,14 +390,14 @@ func GetQuery(table string, strc interface{}, operation string, returning bool) 
 		query = fmt.Sprintf("INSERT INTO %s(%s) VALUES (%s)", table, fields, index)
 
 		if returning {
-			allFieldsSlice, _ := GetStructFieldsWithoutSlices(strc)
+			allFieldsSlice, _ := GetStructFields(strc, false, true)
 			allFields := strings.Join(allFieldsSlice, ", ")
 			query += " RETURNING " + allFields
 		}
 
 		data = getDataFields(fieldsSlice, fieldsValuesMap)
 	case "UPDATE":
-		fieldsSlice, fieldsValuesMap := GetStructFieldsWithoutNull(strc)
+		fieldsSlice, fieldsValuesMap := GetStructFields(strc, false, false)
 
 		FieldsWithIndex := getIndexAndFieldsFormated(fieldsSlice)
 		query = fmt.Sprintf("UPDATE %s SET %s WHERE id = %d", table, FieldsWithIndex, fieldsValuesMap["id"])
@@ -265,16 +405,17 @@ func GetQuery(table string, strc interface{}, operation string, returning bool) 
 		data = getDataFields(fieldsSlice, fieldsValuesMap)
 
 		if returning {
-			allFieldsSlice, _ := GetStructFieldsWithoutSlices(strc)
+			allFieldsSlice, _ := GetStructFields(strc, false, true)
 			allFields := strings.Join(allFieldsSlice, ", ")
 			query += " RETURNING " + allFields
 		}
 
 	case "SELECT":
-		fieldsSlice, _ := GetStructFieldsWithoutSlices(strc)
+		fieldsSlice, _ := GetStructFields(strc, false, true)
 		fields := strings.Join(fieldsSlice, ", ")
 
 		query = fmt.Sprintf("SELECT %s FROM %s", fields, table)
+
 	default:
 		return "", nil, errors.New("operation not valid")
 	}
@@ -297,7 +438,7 @@ func GetMixSelect(tables map[string]interface{}) string {
 
 		mixTables = append(mixTables, tableAndSingleTable)
 
-		fields, _ := GetStructFieldsWithoutSlices(strct)
+		fields, _ := GetStructFields(strct, false, true)
 		var tableAndFields []string
 
 		for _, field := range fields {
@@ -461,11 +602,15 @@ func ValidateUser(input string, password string) (uint, uint, error) {
 		return 0, 0, errors.New("incorrect password")
 	}
 
+	access_level, errRole := GetUserMaxAccessLevel(adminBufferId)
+
+	if IsDeleted("users", adminBufferId) && access_level != ROOT {
+		return 0, 0, errors.New("user is deleted")
+	}
+
 	if !bufferVerified {
 		return 0, 0, errors.New("user is not verified")
 	}
-
-	access_level, errRole := GetUserMaxAccessLevel(adminBufferId)
 
 	return adminBufferId, access_level, errRole
 }

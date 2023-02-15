@@ -146,7 +146,7 @@ func UpdateRole(updatingRole *models.Role, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingRole, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -234,7 +234,7 @@ func NewUser(user *models.User) error {
 	return nil
 }
 
-func GetUsers(root bool) ([]models.User, error) {
+func GetUsers(root bool, relationalIDs *map[string]uint) ([]models.User, error) {
 
 	db := database.Connect()
 	defer db.Close()
@@ -247,6 +247,21 @@ func GetUsers(root bool) ([]models.User, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -356,6 +371,7 @@ func GetUser(id uint, root bool) (models.User, error) {
 	return user, err
 }
 
+// Personalized query
 func GetAdmins() ([]models.User, error) {
 	db := database.Connect()
 	defer db.Close()
@@ -461,7 +477,7 @@ func UpdateUser(updatingUser *models.User, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingUser, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -643,7 +659,7 @@ func UpdateInheritUserRole(updatingInheritUserRole *models.InheritUserRole, root
 
 	query, data, err := commons.GetQuery(tableName, *updatingInheritUserRole, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -667,61 +683,6 @@ func UpdateInheritUserRole(updatingInheritUserRole *models.InheritUserRole, root
 
 	return nil
 }
-
-// TODO: check this case ---------------------
-// Relational, use subID
-func GetInheritUserRolesTODO(subId uint, root bool) ([]models.Role, error) {
-	var userRoles []models.Role
-	db := database.Connect()
-	defer db.Close()
-
-	tableName := "inherit_user_roles"
-	query, _, err := commons.GetQuery(tableName, models.InheritUserRole{}, "SELECT", false)
-	if err != nil {
-		return nil, fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
-	}
-	query += " WHERE user_id = $1"
-
-	if !root {
-		query += " AND deleted_at IS NULL"
-	}
-
-	rows, err := db.Query(query, subId)
-	if err != nil {
-		return nil, fmt.Errorf("can't execute the query %s ERROR: %s", tableName, err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var inheritUserRole models.InheritUserRole
-		err = rows.Scan(
-			&inheritUserRole.Id,
-			&inheritUserRole.CreatedAt,
-			&inheritUserRole.UpdatedAt,
-			&inheritUserRole.DeletedAt,
-			&inheritUserRole.RoleID,
-			&inheritUserRole.UserID)
-		if err != nil {
-			return nil, fmt.Errorf("can't execute the %s query ERROR: %s", tableName, err.Error())
-		}
-
-		subTableName := "roles"
-		role, err := GetRole(inheritUserRole.RoleID, root)
-		if err != nil {
-			return nil, fmt.Errorf("%s not found in a relational table ERROR: %s", subTableName, err.Error())
-		}
-		userRoles = append(userRoles, role)
-	}
-
-	if len(userRoles) == 0 {
-		return nil, fmt.Errorf("%s not found", tableName)
-	}
-
-	return userRoles, nil
-}
-
-//
-// --------------------------------------------
 
 //
 
@@ -866,7 +827,7 @@ func UpdateUserPhone(updatingUserPhone *models.UserPhone, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingUserPhone, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1035,7 +996,7 @@ func UpdateUserMail(updatingUserMail *models.UserMail, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingUserMail, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1196,7 +1157,7 @@ func UpdateUserReport(updatingUserReport *models.UserReport, root bool) error {
 
 	query, data, err := commons.GetQuery(tableName, *updatingUserReport, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1359,7 +1320,7 @@ func UpdateMonetaryBound(updatingMonetaryBound *models.MonetaryBound, root bool)
 
 	query, data, err := commons.GetQuery(tableName, *updatingMonetaryBound, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1524,7 +1485,7 @@ func UpdateMonetaryDiscount(updatingMonetaryDiscount *models.MonetaryDiscount, r
 
 	query, data, err := commons.GetQuery(tableName, *updatingMonetaryDiscount, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -1586,7 +1547,7 @@ func NewBranchUserRole(branchUserRole *models.BranchUserRole) error {
 	return nil
 }
 
-func GetBranchUserRoles(root bool) ([]models.BranchUserRole, error) {
+func GetBranchUserRoles(root bool, relationalIDs *map[string]uint) ([]models.BranchUserRole, error) {
 	var branchUserRoles []models.BranchUserRole
 	db := database.Connect()
 	defer db.Close()
@@ -1599,6 +1560,21 @@ func GetBranchUserRoles(root bool) ([]models.BranchUserRole, error) {
 
 	if !root {
 		query += " WHERE deleted_at IS NULL"
+	}
+
+	if relationalIDs != nil {
+		switch root {
+		case true:
+			query += " WHERE "
+		case false:
+			query += " AND "
+		}
+
+		var relationConditions []string
+		for key, value := range *relationalIDs {
+			relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+		}
+		query += strings.Join(relationConditions, " AND ")
 	}
 
 	rows, err := db.Query(query)
@@ -1689,7 +1665,7 @@ func UpdateBranchUserRole(updatingBranchUserRole *models.BranchUserRole, root bo
 
 	query, data, err := commons.GetQuery(tableName, *updatingBranchUserRole, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}

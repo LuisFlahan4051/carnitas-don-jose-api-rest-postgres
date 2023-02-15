@@ -173,7 +173,7 @@ func NewNotification(notification *models.AdminNotification) error {
 	return nil
 }
 
-func GetNotifications(pagination models.Pagination, solved string, root bool) ([]models.AdminNotification, error) {
+func GetNotifications(pagination models.Pagination, solved string, root bool, relationalIDs *map[string]uint) ([]models.AdminNotification, error) {
 	db := database.Connect()
 	defer db.Close()
 
@@ -225,6 +225,22 @@ func GetNotifications(pagination models.Pagination, solved string, root bool) ([
 		if !root {
 			deleteNull = "WHERE deleted_at IS NULL"
 		}
+
+		if relationalIDs != nil {
+			switch root {
+			case true:
+				query += " WHERE "
+			case false:
+				query += " AND "
+			}
+
+			var relationConditions []string
+			for key, value := range *relationalIDs {
+				relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+			}
+			query += strings.Join(relationConditions, " AND ")
+		}
+
 		var solvedQuery string
 		switch solved {
 		case "true":
@@ -247,6 +263,15 @@ func GetNotifications(pagination models.Pagination, solved string, root bool) ([
 			deleteNull = "deleted_at IS NULL AND"
 		}
 
+		relationQuery := ""
+		if relationalIDs != nil {
+			var relationConditions []string
+			for key, value := range *relationalIDs {
+				relationConditions = append(relationConditions, fmt.Sprintf("%s = %d", key, value))
+			}
+			relationQuery += strings.Join(relationConditions, " AND ") + " AND "
+		}
+
 		var solvedQuery string
 		switch solved {
 		case "true":
@@ -257,7 +282,7 @@ func GetNotifications(pagination models.Pagination, solved string, root bool) ([
 			solvedQuery = ""
 		}
 
-		query += fmt.Sprintf(" WHERE %s %s created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", deleteNull, solvedQuery, since, to)
+		query += fmt.Sprintf(" WHERE %s %s %s created_at BETWEEN '%s' AND '%s' ORDER BY created_at DESC", deleteNull, solvedQuery, relationQuery, since, to)
 
 	}
 
@@ -354,7 +379,7 @@ func UpdateNotification(notification *models.AdminNotification, root bool) error
 
 	query, data, err := commons.GetQuery(tableName, *notification, "UPDATE", true)
 	querySplit := strings.Split(query, "RETURNING") // Separate "UPDATE () SET () WHERE id = ()" + <stringToIntroduce> + "()"
-	query = fmt.Sprintf("%s AND delete_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
+	query = fmt.Sprintf("%s AND deleted_at IS NULL RETURNING %s", querySplit[0], querySplit[1])
 	if err != nil {
 		return fmt.Errorf("can't get the query %s ERROR: %s", tableName, err.Error())
 	}
@@ -382,9 +407,27 @@ func UpdateNotification(notification *models.AdminNotification, root bool) error
 	return nil
 }
 
-func DeleteNotifications() error {
+func DeleteNotifications(root bool) error {
 	db := database.Connect()
 	defer db.Close()
+
+	tableName := "notifications"
+	if !root {
+		lastIdQuery := fmt.Sprintf("SELECT id FROM %s ORDER BY id DESC LIMIT 1", tableName)
+		var lastId uint
+		err := db.QueryRow(lastIdQuery).Scan(&lastId)
+		if err != nil {
+			return fmt.Errorf("can't execute the query ERROR: %s", "last id not found "+err.Error())
+		}
+
+		query := fmt.Sprintf("UPDATE %s SET deleted_at = CURRENT_TIMESTAMP WHERE id <= %d", tableName, lastId)
+		_, err = db.Exec(query)
+		if err != nil {
+			return fmt.Errorf("can't execute the query ERROR: %s", err.Error())
+		}
+
+		return nil
+	}
 
 	query := "TRUNCATE TABLE notifications CASCADE"
 	_, err := db.Exec(query)
@@ -466,7 +509,7 @@ func GetNotificationImages(id uint, root bool) ([]models.AdminNotificationImage,
 	}
 
 	if len(images) == 0 {
-		return images, errors.New("no images found")
+		return images, fmt.Errorf("%s not found", tableName)
 	}
 
 	return images, nil

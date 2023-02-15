@@ -30,20 +30,20 @@ CREATE TABLE safeboxes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    cents10 INT DEFAULT 0 CHECK (cents10 >= 0),
-    cents50 INT DEFAULT 0 CHECK (cents50 >= 0),
-    coins1 INT DEFAULT 0 CHECK (coins1 >= 0),
-    coins2 INT DEFAULT 0 CHECK (coins2 >= 0),
-    coins5 INT DEFAULT 0 CHECK (coins5 >= 0),
-    coins10 INT DEFAULT 0 CHECK (coins10 >= 0),
-    coins20 INT DEFAULT 0 CHECK (coins20 >= 0),
+    cents10 INT CHECK (cents10 >= 0),
+    cents50 INT CHECK (cents50 >= 0),
+    coins1 INT CHECK (coins1 >= 0),
+    coins2 INT CHECK (coins2 >= 0),
+    coins5 INT CHECK (coins5 >= 0),
+    coins10 INT CHECK (coins10 >= 0),
+    coins20 INT CHECK (coins20 >= 0),
 
-    bills20 INT DEFAULT 0 CHECK (bills20 >= 0),
-    bills50 INT DEFAULT 0 CHECK (bills50 >= 0),
-    bills100 INT DEFAULT 0 CHECK (bills100 >= 0),
-    bills200 INT DEFAULT 0 CHECK (bills200 >= 0),
-    bills500 INT DEFAULT 0 CHECK (bills500 >= 0),
-    bills1000 INT DEFAULT 0 CHECK (bills1000 >= 0),
+    bills20 INT CHECK (bills20 >= 0),
+    bills50 INT CHECK (bills50 >= 0),
+    bills100 INT CHECK (bills100 >= 0),
+    bills200 INT CHECK (bills200 >= 0),
+    bills500 INT CHECK (bills500 >= 0),
+    bills1000 INT CHECK (bills1000 >= 0),
 
     PRIMARY KEY (id)
 );
@@ -54,7 +54,7 @@ CREATE TABLE incomes(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT,
+    reason TEXT NOT NULL,
     income REAL NOT NULL CHECK (income >= 0),
 
 
@@ -68,7 +68,7 @@ CREATE TABLE expenses(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL,
 
-    reason TEXT,
+    reason TEXT NOT NULL,
     expense REAL NOT NULL CHECK (expense >= 0),
 
     PRIMARY KEY (id)
@@ -81,9 +81,9 @@ CREATE TABLE arguments(
     deleted_at TIMESTAMP DEFAULT NULL,
 
 
-    complaint BOOLEAN,
+    complaint BOOLEAN NOT NULL DEFAULT false,
     score INT NOT NULL CHECK (score >= 0 AND score <= 5),
-    argument TEXT,
+    argument TEXT NOT NULL,
 
     PRIMARY KEY (id)
 );
