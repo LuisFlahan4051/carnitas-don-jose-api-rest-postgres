@@ -11,3 +11,5 @@ func changeMyMainCredentials(writer http.ResponseWriter, request *http.Request) 
 func changeMyProfile(writer http.ResponseWriter, request *http.Request) {}
 
 func changeMyProfilePicture(writer http.ResponseWriter, request *http.Request) {}
+
+//-------------------------> Fast Calculator <-------------------------//

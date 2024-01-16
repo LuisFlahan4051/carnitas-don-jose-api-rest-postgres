@@ -9,7 +9,7 @@ CREATE TABLE turns (
     active BOOLEAN DEFAULT true,
 
     incomes_counter REAL NOT NULL CHECK (incomes_counter >= 0) DEFAULT 0,
-	netincomes_counter REAL NOT NULL CHECK (netincomes_counter >= 0) DEFAULT 0,
+	netincomes_counter REAL NOT NULL DEFAULT 0,
 	expenses_counter REAL NOT NULL CHECK (expenses_counter >= 0) DEFAULT 0,
 
     user_id INT NOT NULL,

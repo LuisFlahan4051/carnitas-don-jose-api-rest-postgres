@@ -365,6 +365,7 @@ func getDataFields(fieldsSlice []string, fieldsValuesMap map[string]interface{})
 
 		regularExpresion := regexp.MustCompile(`\d{4}-\d{2}-\d{2}`)
 		if regularExpresion.MatchString(valueString) {
+			//the split is needed for a correct date format
 			date, _ := time.Parse("2006-01-02 15:04:05", strings.Split(valueString, " -")[0])
 
 			data = append(data, date)

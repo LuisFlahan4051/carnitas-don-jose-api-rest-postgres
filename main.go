@@ -10,6 +10,7 @@ import (
 
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database"
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/routes"
+	"github.com/rs/cors"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -22,6 +23,9 @@ var (
 	URLs []string
 )
 
+/*
+First usage: set into browser: http://localhost:8080/users?admin_username=root&admin_password=root
+*/
 func main() {
 	initEnv()
 	initFlags()
@@ -49,8 +53,16 @@ func main() {
 		http.StripPrefix(publicNotificationsFilesDir, http.FileServer(http.Dir("./storage/public/notifications"))),
 	)
 
+	// CORS
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		AllowedMethods:   []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+	})
+	handler := c.Handler(router)
 	// RUN SERVER
-	http.ListenAndServe(":"+*port, router)
+	http.ListenAndServe(":"+*port, handler)
 }
 
 func initEnv() {

@@ -5,11 +5,12 @@ CREATE TABLE safebox_actions(
     deleted_at TIMESTAMP DEFAULT NULL,
 
     withdrawal BOOLEAN DEFAULT false,
-
+    /* Debería agregar el branch para designar en qué local se hace el retiro */
     user_id INT NOT NULL,
     PRIMARY KEY (id)
 );
 
+/*Porque se genera una caja para poder egresar el dinero.*/
 CREATE TABLE action_safebox(
     id SERIAL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
