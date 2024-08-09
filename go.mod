@@ -3,20 +3,14 @@ module github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres
 go 1.19
 
 require (
+	github.com/gorilla/schema v1.2.0
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
 )
 
 require (
-	github.com/fatih/structtag v1.2.0 // indirect
-	github.com/gorilla/schema v1.2.0 // indirect
-	golang.org/x/image v0.2.0 // indirect
-	golang.org/x/tools v0.5.0 // indirect
-)
-
-require (
 	github.com/chai2010/webp v1.1.1
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -30,6 +24,6 @@ require (
 	github.com/rs/cors v1.10.1
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
-	gorm.io/driver/postgres v1.4.5 // indirect
-	gorm.io/gorm v1.24.2 // indirect
+	gorm.io/driver/postgres v1.4.5
+	gorm.io/gorm v1.24.2
 )

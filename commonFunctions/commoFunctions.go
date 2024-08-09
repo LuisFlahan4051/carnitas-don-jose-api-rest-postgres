@@ -1,12 +1,11 @@
 package commonFunctions
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
+
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
@@ -21,7 +20,6 @@ import (
 	"time"
 
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/database"
-	"github.com/chai2010/webp"
 )
 
 const (
@@ -506,29 +504,29 @@ func DeleteFromTableById(tableName string, id uint, root bool) error {
 // ------------------------ Manipulate Images ------------------------ //
 
 func SavePictureAsWebp(file io.Reader, filePath string, fileName string) error {
-	data, err := io.ReadAll(file)
+	_, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
 
-	imageData, _, err := image.Decode(bytes.NewReader(data))
+	//imageData, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
 
-	var fileConverted *os.File
+	//var fileConverted *os.File
 	_, err = os.Stat(filePath + fileName)
 	notExist := os.IsNotExist(err)
 	if notExist {
 		os.MkdirAll(filePath, 0777)
 	}
 
-	fileConverted, err = os.Create(filePath + fileName)
+	//fileConverted, err = os.Create(filePath + fileName)
 	if err != nil {
 		return err
 	}
 
-	err = webp.Encode(fileConverted, imageData, nil)
+	//err = webp.Encode(fileConverted, imageData, nil)
 	if err != nil {
 		return err
 	}
