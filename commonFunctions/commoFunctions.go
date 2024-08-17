@@ -550,7 +550,7 @@ func FileIsImage(fileName string) bool {
 // validate (request) vars -> ["admin_username", "admin_password", "root"] and returns userID, MaxAccessLevel, error
 func Authentication(request *http.Request, accessLevelRequired uint) (uint, uint, error) {
 	if request.URL.Query().Get("admin_username") == "" || request.URL.Query().Get("admin_password") == "" {
-		return 0, 0, errors.New("need credentials to access this resource")
+		return 0, 0, errors.New("need credentials to access this resource, set admin_username and admin_password in the URL")
 	}
 
 	userId, accessLevel, err := ValidateUser(request.URL.Query().Get("admin_username"), request.URL.Query().Get("admin_password"))

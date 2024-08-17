@@ -53,11 +53,13 @@ docker exec -it postgres_carnitas /bin/bash
 
 ```
 
-## Paso 6: ejecuta la api solo escribiendo air en consola dentro del directorio raíz
+## Paso 6: ejecuta la api solo escribiendo air en consola dentro del directorio raíz y luego abre el enlace definidor por la API
 
 ```
 
 air
+
+http://localhost:8080/users?admin_username=root&admin_password=root
 
 ```
 
