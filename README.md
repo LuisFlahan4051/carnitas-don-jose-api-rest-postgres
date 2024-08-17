@@ -1,4 +1,3 @@
-```
 # Instalación
 
 Sigue los pasos a continuación para instalar y configurar el proyecto.
@@ -39,7 +38,9 @@ POSTGRES_PASSWORD=4051
 POSTGRES_DB=carnitas_db
 
 ```
+
 ## Paso 5: IMPORTANTE, edita las variables en `init.sh` de acuerdo a lo que definiste en go.env, recuerda que tambien tienen que ser las mismas entradas del paso anterior:
+
 ```
 
 docker cp -L .\database\schema\sql postgres_carnitas:.\scripts
@@ -74,8 +75,6 @@ Si deseas contribuir a este proyecto, sigue los pasos a continuación:
 ## Problemas y preguntas
 
 Si tienes algún problema o pregunta, no dudes en abrir un issue en el repositorio.
-
-```
 
 Recuerda reemplazar `tu-usuario` y `tu-repositorio` con tu información correspondiente.
 
