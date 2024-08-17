@@ -73,9 +73,12 @@ func initEnv() {
 }
 
 func initFlags() {
-	database_to_generate := flag.String("dbgen", "", "Database name, -gen=true")
-	usergen := flag.String("usergen", "postgres", "Database user, -gen=true")
+	// GENERATE DATABASE, just for a local instalation of postgres.
+	// First use usergen, then dbgen.
+	database_to_generate := flag.String("dbgen", "", "Database name (local instalation of postgres, no docker), -gen=true")
+	usergen := flag.String("usergen", "postgres", "Database user (local instalation of postgres, no docker), -gen=true")
 
+	// PORT, change the port of the api
 	port = flag.String("port", "8080", "Port to use")
 
 	flag.Parse()

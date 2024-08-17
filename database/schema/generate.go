@@ -12,7 +12,7 @@ import (
 func getNameFiles(directory string) []string {
 	var file_names []string
 
-	files, err := os.ReadDir("./database/schema/")
+	files, err := os.ReadDir(directory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,12 +62,16 @@ func Generate(database string, user string) {
 
 	createDatabase(database, user)
 
-	files := getNameFiles("./database/schema/")
+	files := getNameFiles("./database/schema/sql")
 
 	for _, file := range files {
 		var out bytes.Buffer
 
-		command := exec.Command("psql", "-U", user, "-d", database, "-f", "./database/schema/"+file)
+		if !strings.HasSuffix(file, ".sql") {
+			continue
+		}
+
+		command := exec.Command("psql", "-U", user, "-d", database, "-f", "./database/schema/sql"+file)
 		command.Stdout = &out
 
 		err := command.Run()
