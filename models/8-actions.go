@@ -53,3 +53,8 @@ type Pagination struct {
 	Since *time.Time `json:"since,omitempty"`
 	To    *time.Time `json:"to,omitempty"`
 }
+
+type LoginForm struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}

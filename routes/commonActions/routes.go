@@ -22,4 +22,8 @@ func SetCommonHandleActions(router *mux.Router, URLs *[]string) {
 	route = "/my/profile/change/picture"
 	router.HandleFunc(route, changeMyProfilePicture).Methods("PATCH")
 	*URLs = append(*URLs, route)
+
+	route = "/login"
+	router.HandleFunc(route, validateUser).Methods("POST")
+	*URLs = append(*URLs, route)
 }
