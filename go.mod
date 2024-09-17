@@ -1,11 +1,19 @@
 module github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres
 
-go 1.19
+go 1.21.5
+
+toolchain go1.23.0
 
 require (
 	github.com/gorilla/schema v1.2.0
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
+)
+
+require (
+	github.com/newtoallofthis123/gotypes v0.0.0-20240107163300-9ca2253fd77d // indirect
+	github.com/tkrajina/go-reflector v0.5.5 // indirect
+	github.com/tkrajina/typescriptify-golang-structs v0.1.11 // indirect
 )
 
 require (

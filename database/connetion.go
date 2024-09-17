@@ -38,7 +38,8 @@ func TestConnection() {
 	log.Println("Connecting to database " + dbname + " in " + dbtype + "...")
 
 	stringConnection := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=America/Mexico_City", host, user, password, dbname, port)
-	database, err := sql.Open(dbtype, stringConnection)
+	database, _ := sql.Open(dbtype, stringConnection)
+	err := database.Ping()
 
 	if err != nil {
 		log.Fatal("Failed to open a DB connection: ", err)

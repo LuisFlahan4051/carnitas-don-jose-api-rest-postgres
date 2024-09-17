@@ -9,7 +9,34 @@ import (
 	"github.com/LuisFlahan4051/carnitas-don-jose-api-rest-postgres/models"
 )
 
-func seeMyProfile(writer http.ResponseWriter, request *http.Request) {}
+func seeMyProfile(writer http.ResponseWriter, request *http.Request) {
+	var loginForm models.LoginForm
+	json.NewDecoder(request.Body).Decode(&loginForm)
+	userID, accessLevel, err := commons.ValidateUser(loginForm.Username, loginForm.Password)
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	root := accessLevel == commons.ROOT && request.URL.Query().Get("root") == "true"
+	newUser, err := crud.GetUser(userID, root)
+
+	if err != nil {
+		commons.Logcatch(writer, http.StatusBadRequest, err)
+		return
+	}
+
+	crud.NewServerActionLog(models.ServerLogs{
+		UserID:      newUser.Id,
+		Root:        &root,
+		Transaction: "seeMyProfile",
+	})
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+	json.NewEncoder(writer).Encode(newUser)
+
+}
 
 func changeMyMainCredentials(writer http.ResponseWriter, request *http.Request) {}
 
