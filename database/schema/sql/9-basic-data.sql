@@ -1,6 +1,8 @@
 INSERT INTO roles(name, access_level) VALUES ('root', 1), ('admin', 2), ('supervisor', 3), ('cashier', 4), ('waiter', 5), ('cook', 5);
 
-INSERT INTO users(username, password, verified) VALUES ('root', 'root', true), ('main', 'main', true);
+INSERT INTO branches(name, address) VALUES ('Santa Ana Chiautempan', 'direccion de santana...'), ('Tlaxcala Centro','Axotla del río');
+
+INSERT INTO users(username, password, verified, origin_branch_id,branch_id) VALUES ('root', 'root', true,1,1), ('main', 'main', true,1,1);
 
 INSERT INTO inherit_user_roles(user_id, role_id) VALUES ('1','1'),('2','1');
 

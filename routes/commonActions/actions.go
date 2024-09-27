@@ -49,7 +49,7 @@ func validateUser(writer http.ResponseWriter, request *http.Request) {
 	var loginForm models.LoginForm
 	json.NewDecoder(request.Body).Decode(&loginForm)
 
-	_, _, err := commons.ValidateUser(loginForm.Username, loginForm.Password)
+	userID, _, err := commons.ValidateUser(loginForm.Username, loginForm.Password)
 
 	if err != nil {
 		commons.Logcatch(writer, http.StatusBadRequest, err)
@@ -58,7 +58,7 @@ func validateUser(writer http.ResponseWriter, request *http.Request) {
 
 	root := false
 	crud.NewServerActionLog(models.ServerLogs{
-		UserID:      0,
+		UserID:      userID,
 		Root:        &root,
 		Transaction: "login",
 	})

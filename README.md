@@ -47,10 +47,18 @@ docker cp -L .\database\schema\sql postgres_carnitas:.\scripts
 docker exec -it postgres_carnitas /bin/bash
 
 > chmod +x /scripts/init.sh
+> chmod +x /scripts/restore.sh
 > cd /scripts/
+> ./restore.sh
 > ./init.sh
 > exit
 
+```
+
+## To restore the database, use the script restore.sh, and repeat step 5 once the following line has been executed
+
+```
+docker exec postgres_carnitas rm -rf ./scripts
 ```
 
 ## Paso 6: ejecuta la api solo escribiendo air en consola dentro del directorio raíz y luego abre el enlace definidor por la API

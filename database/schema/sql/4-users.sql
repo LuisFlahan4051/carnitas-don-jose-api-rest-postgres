@@ -24,7 +24,7 @@ CREATE TABLE users(
 
     verified BOOLEAN DEFAULT false,
     warning BOOLEAN DEFAULT false,
-    darktheme BOOLEAN DEFAULT false,
+    darktheme BOOLEAN DEFAULT true,
 
 
     active_contract BOOLEAN DEFAULT true,

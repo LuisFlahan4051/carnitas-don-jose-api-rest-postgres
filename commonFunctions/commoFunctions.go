@@ -566,7 +566,7 @@ func Authentication(request *http.Request, accessLevelRequired uint) (uint, uint
 	return userId, accessLevel, nil
 }
 
-// if user exists returns userID, accessLevel, error
+// if user exists returns userID, accessLevel, error. Isn't a resource, this functions is used by Authentication.
 func ValidateUser(input string, password string) (uint, uint, error) {
 
 	key := CleanSpaces(input)

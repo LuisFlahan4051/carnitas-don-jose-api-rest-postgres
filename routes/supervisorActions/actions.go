@@ -73,14 +73,16 @@ func seeBranch(writer http.ResponseWriter, request *http.Request) {
 	branch.BranchArticlesStock = relationBranchArticles
 
 	branchUsers, err := crud.GetUsers(root, &relationIDs)
+	var branchUsersCleaned []models.User
 	for _, user := range branchUsers {
 		user.Password = ""
+		branchUsersCleaned = append(branchUsersCleaned, user)
 	}
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return
 	}
-	branch.Users = branchUsers
+	branch.Users = branchUsersCleaned
 
 	relationBranchUserRoles, err := crud.GetBranchUserRoles(root, &relationIDs)
 	if err != nil && !strings.Contains(err.Error(), "not found") {
@@ -151,6 +153,13 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 	// Getting the data from the form and decode into the user struct
 	var user models.User
 
+	username := request.FormValue("username")
+	_, _, err = commons.ValidateUser(username, "")
+	if !strings.Contains(err.Error(), "user does not exist:") {
+		commons.Logcatch(writer, http.StatusBadRequest, errors.New("the username already exist"))
+		return
+	}
+
 	file, handle, err := request.FormFile("profile_picture")
 	existFile := true
 	if err != nil {
@@ -161,13 +170,11 @@ func registNewUser(writer http.ResponseWriter, request *http.Request) {
 		existFile = false
 	}
 
-	if *user.BranchID == 0 {
-		adminBuffer, _ := crud.GetUser(adminBufferId, false)
-		user.BranchID = adminBuffer.BranchID
-		if user.BranchID == nil {
-			commons.Logcatch(writer, http.StatusBadRequest, errors.New("root user must have a origin branch"))
-			return
-		}
+	adminBuffer, _ := crud.GetUser(adminBufferId, false)
+	user.BranchID = adminBuffer.BranchID
+	if user.BranchID == nil {
+		commons.Logcatch(writer, http.StatusBadRequest, errors.New("root user must have a origin branch"))
+		return
 	}
 	user.OriginBranchID = user.BranchID
 

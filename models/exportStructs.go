@@ -24,9 +24,8 @@ func goTypeToTypeScript(goType string) string {
 	}
 }
 
-func GenerateTypescriptFiles() {
+func GenerateTypescriptFiles(filePath string, fileOutputPath string) {
 	// Abrir el archivo structs.go (cambia el archivo si es necesario)
-	filePath := "./models/1-products.go"
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println("Error al abrir el archivo:", err)
@@ -44,6 +43,7 @@ func GenerateTypescriptFiles() {
 		return
 	}
 
+	var tsOutput string
 	// Iterar por las estructuras encontradas
 	for _, decl := range node.Decls {
 		if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
@@ -63,18 +63,36 @@ func GenerateTypescriptFiles() {
 								tsType := goTypeToTypeScript(goType)
 
 								// Crear el campo en formato TypeScript
-								tsFields = append(tsFields, fmt.Sprintf("%s: %s;", fieldName.Name, tsType))
+								tsFields = append(tsFields, fmt.Sprintf("%s: %s;", toSnakeCase(fieldName.Name), tsType))
 							}
 						}
 
 						// Unir los campos y generar el tipo TypeScript final
-						tsOutput := fmt.Sprintf("export type %s = {\n\t%s\n};", structName, strings.Join(tsFields, "\n\t"))
-						fmt.Println(tsOutput)
+						ts := fmt.Sprintf("export type %s = {\n\t%s\n};", structName, strings.Join(tsFields, "\n\t"))
+						tsOutput = tsOutput + "\n" + ts
 					}
 				}
 			}
 		}
 	}
+	err = os.WriteFile(fileOutputPath, []byte(tsOutput), 0644)
+	if err != nil {
+		fmt.Println("Error al escribir en el archivo:", err)
+		return
+	}
+
+	fmt.Println("Archivo " + fileOutputPath + " creado exitosamente.")
+}
+
+func toSnakeCase(str string) string {
+	// Expresión regular para encontrar lugares donde hay mayúsculas precedidas por letras minúsculas o números
+	re := regexp.MustCompile("([a-z0-9])([A-Z])")
+
+	// Insertar un guion bajo entre las letras que coinciden con el patrón
+	snake := re.ReplaceAllString(str, "${1}_${2}")
+
+	// Convertir todo el resultado a minúsculas
+	return strings.ToLower(snake)
 }
 
 // Función para convertir tipos SQL a tipos Go

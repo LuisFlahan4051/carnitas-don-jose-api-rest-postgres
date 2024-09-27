@@ -4,7 +4,7 @@ import "github.com/gorilla/mux"
 
 func SetCommonHandleActions(router *mux.Router, URLs *[]string) {
 	route := "/my/profile"
-	router.HandleFunc(route, seeMyProfile).Methods("GET")
+	router.HandleFunc(route, seeMyProfile).Methods("POST")
 	*URLs = append(*URLs, route)
 
 	route = "/users/{user_id}/profile/picture"

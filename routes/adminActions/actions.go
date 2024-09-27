@@ -1057,7 +1057,7 @@ func verifyUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	*user.Verified = true
-	crud.UpdateUser(&user, root)
+	err = crud.UpdateUser(&user, root)
 	if err != nil {
 		commons.Logcatch(writer, http.StatusInternalServerError, err)
 		return

@@ -49,6 +49,8 @@ func displayDevTools() {
 		fmt.Println("1: Exit.")
 		fmt.Println("2: Test connection to DB.")
 		fmt.Println("3: Generate typescript interfaces with golang structs.")
+		fmt.Println("4: Run server.")
+
 		fmt.Print("> ")
 
 		var option int
@@ -65,7 +67,17 @@ func displayDevTools() {
 		case 2:
 			database.TestConnection()
 		case 3:
-			models.GenerateTypescriptFiles()
+			//TODO: scan and iterate the dir
+			models.GenerateTypescriptFiles("./models/1-products.go", "./database/schema/generated/types/1-products.ts")
+			models.GenerateTypescriptFiles("./models/2-entities.go", "./database/schema/generated/types/2-entities.ts")
+			models.GenerateTypescriptFiles("./models/3-branches.go", "./database/schema/generated/types/3-branches.ts")
+			models.GenerateTypescriptFiles("./models/4-users.go", "./database/schema/generated/types/4-users.ts")
+			models.GenerateTypescriptFiles("./models/5-turns.go", "./database/schema/generated/types/5-turns.ts")
+			models.GenerateTypescriptFiles("./models/6-sales.go", "./database/schema/generated/types/6-sales.ts")
+			models.GenerateTypescriptFiles("./models/7-inventories.go", "./database/schema/generated/types/7-inventories.ts")
+			models.GenerateTypescriptFiles("./models/8-actions.go", "./database/schema/generated/types/8-actions.ts")
+		case 4:
+			prepareServer()
 		}
 	}
 
@@ -102,8 +114,12 @@ func prepareServer() {
 	})
 	handler := c.Handler(router)
 	// RUN SERVER
-	http.ListenAndServe(":"+*port, handler)
-
+	fmt.Println("Server running...")
+	err := http.ListenAndServe(":"+*port, handler)
+	if err != nil {
+		fmt.Println("Can't run the server: ", err)
+		return
+	}
 }
 
 func initEnv() {

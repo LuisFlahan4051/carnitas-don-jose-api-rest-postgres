@@ -11,12 +11,6 @@ require (
 )
 
 require (
-	github.com/newtoallofthis123/gotypes v0.0.0-20240107163300-9ca2253fd77d // indirect
-	github.com/tkrajina/go-reflector v0.5.5 // indirect
-	github.com/tkrajina/typescriptify-golang-structs v0.1.11 // indirect
-)
-
-require (
 	github.com/chai2010/webp v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
